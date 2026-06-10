@@ -1,0 +1,1 @@
+"""Betting match notifier package."""

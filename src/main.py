@@ -1,0 +1,101 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
+from .cli import build_parser
+from .config import Config, load_config
+from .formatter import format_message
+from .lineup_provider import run_lineup_pipeline
+from .matches import get_upcoming_matches, inside_notification_window
+from .odds import run_exact_score_pipeline, run_goalscorer_pipeline
+from .source_discovery import SOURCE_DISCOVERY_SUMMARY
+from .storage import already_notified, save_notified_match
+from .telegram_client import send_telegram_message
+
+
+def log(message: str) -> None:
+    print(message, flush=True)
+
+
+def send_test_telegram(config: Config) -> int:
+    result = send_telegram_message(config, "Betting Match Notifier test message.")
+    log(f"Telegram send result: {'success' if result.success else 'failed'}")
+    if result.error:
+        log(f"Errors, if any: {result.error}")
+    return 0 if result.success else 1
+
+
+def run(config: Config, now: datetime | None = None) -> int:
+    now = now or datetime.now(UTC)
+    log("Application started")
+    log("Source discovery completed")
+    log(SOURCE_DISCOVERY_SUMMARY.strip())
+
+    if config.send_test_telegram:
+        return send_test_telegram(config)
+
+    matches = get_upcoming_matches(config, now=now)
+    log(f"Matches retrieved: {len(matches)}")
+    if not matches:
+        log("No match present in the selected lookahead window.")
+        log("Application finished")
+        return 0
+
+    log("Matches found")
+    for match in matches:
+        log(f"- {match.id}: {match.home_team} vs {match.away_team} at {match.kickoff_time_utc.isoformat()}")
+
+    skipped = 0
+    processed = 0
+    for match in matches:
+        if already_notified(match.id) and not config.dry_run and not config.manual_override:
+            skipped += 1
+            log(f"Matches skipped: {match.id} already notified")
+            continue
+        if not config.manual_override and not inside_notification_window(match, config, now=now):
+            skipped += 1
+            log(f"Matches skipped: {match.id} outside notification window")
+            continue
+
+        processed += 1
+        lineup_result = run_lineup_pipeline(config, match)
+        log(f"Lineup pipeline result: {'success' if lineup_result.success else 'failed'}")
+        if lineup_result.error:
+            log(f"Lineup error: {lineup_result.error}")
+
+        exact_score_result = run_exact_score_pipeline(config, match)
+        log(f"Exact score pipeline result: {'success' if exact_score_result.success else 'failed'}")
+        if exact_score_result.error:
+            log(f"Exact score error: {exact_score_result.error}")
+
+        goalscorer_result = run_goalscorer_pipeline(config, match)
+        log(f"Goalscorer pipeline result: {'success' if goalscorer_result.success else 'failed'}")
+        if goalscorer_result.error:
+            log(f"Goalscorer error: {goalscorer_result.error}")
+
+        message = format_message(match, lineup_result, exact_score_result, goalscorer_result, config.timezone)
+        log("Formatted Telegram message:")
+        log(message)
+
+        telegram_result = send_telegram_message(config, message)
+        log(f"Telegram send result: {'success' if telegram_result.success else 'failed'}")
+        if telegram_result.error:
+            log(f"Errors, if any: {telegram_result.error}")
+        if telegram_result.success and (not config.dry_run or config.save_dry_run):
+            save_notified_match(match.id)
+            log("Notification state saved")
+
+    if skipped and not processed:
+        log(f"Matches skipped: {skipped}")
+    log("Application finished")
+    return 0
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+    return run(load_config(args))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
