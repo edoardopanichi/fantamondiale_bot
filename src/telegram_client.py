@@ -17,7 +17,7 @@ def send_telegram_message(config: Config, message: str) -> PipelineResult:
     if not config.telegram_chat_id:
         return PipelineResult(False, error="Missing TELEGRAM_CHAT_ID", source="Telegram")
     url = f"https://api.telegram.org/bot{config.telegram_bot_token}/sendMessage"
-    body = urlencode({"chat_id": config.telegram_chat_id, "text": message}).encode("utf-8")
+    body = urlencode({"chat_id": config.telegram_chat_id, "text": message, "parse_mode": "HTML"}).encode("utf-8")
     try:
         with urlopen(url, data=body, timeout=20) as response:
             payload = json.loads(response.read().decode("utf-8"))

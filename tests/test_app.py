@@ -3,6 +3,7 @@ from __future__ import annotations
 from argparse import Namespace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from src.config import load_config
 from src.formatter import format_message
@@ -13,6 +14,7 @@ from src.models import Match, PipelineResult, RankedOutcome, TeamLineup
 from src.probability import implied_probability
 from src.score_predictions import rank_exact_scores
 from src.storage import already_notified, load_notified, save_notified_match
+from src.telegram_client import send_telegram_message
 
 
 def _args(**overrides):
@@ -110,8 +112,10 @@ def test_formatter_handles_unavailable_pipelines():
         "Europe/Amsterdam",
     )
     assert "Mexico vs South Africa" in message
+    assert "🏆" in message
+    assert "<b>Mexico vs South Africa</b>" in message
     assert "Probable lineup unavailable" in message
-    assert "1. 1-0 (20.0%)" in message
+    assert "1. <b>1-0</b> <i>20.0%</i>" in message
     assert "Half-time result odds unavailable" in message
     assert "Goalscorer odds unavailable" in message
 
@@ -136,7 +140,43 @@ def test_formatter_includes_team_modules():
     assert "Module: 4-4-2" in message
     assert "Module: 5-3-2" in message
     assert "Most Likely Half-Time Results" in message
-    assert "1. Draw (45.0%)" in message
+    assert "1. <b>Draw</b> <i>45.0%</i>" in message
+
+
+def test_telegram_client_requests_html_parse_mode(monkeypatch):
+    captured = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return None
+
+        def read(self):
+            return b'{"ok": true}'
+
+    def fake_urlopen(url, data, timeout):
+        captured["url"] = url
+        captured["payload"] = parse_qs(data.decode("utf-8"))
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("src.telegram_client.urlopen", fake_urlopen)
+    config = load_config(_args())
+    config = config.__class__(
+        **{
+            **config.__dict__,
+            "telegram_bot_token": "token",
+            "telegram_chat_id": "chat",
+        }
+    )
+
+    result = send_telegram_message(config, "<b>Hello</b>")
+
+    assert result.success
+    assert captured["payload"]["parse_mode"] == ["HTML"]
+    assert captured["payload"]["text"] == ["<b>Hello</b>"]
 
 
 def test_lookahead_hours_detects_opening_match(monkeypatch):
