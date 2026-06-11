@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 from .config import Config
-from .models import Match, PipelineResult
+from .models import Match, PipelineResult, TeamLineup
 
 
 def run_lineup_pipeline(config: Config, match: Match) -> PipelineResult:
@@ -49,7 +49,7 @@ def run_lineup_pipeline(config: Config, match: Match) -> PipelineResult:
     return PipelineResult(False, data=None, error="; ".join(errors), source=source_label)
 
 
-def _fetch_api_football_lineups(config: Config, match: Match) -> dict[str, list[str]] | None:
+def _fetch_api_football_lineups(config: Config, match: Match) -> dict[str, TeamLineup] | None:
     fixture_id = match.id if match.id.isdigit() else resolve_api_football_fixture_id(config, match)
     if not fixture_id:
         return None
@@ -59,20 +59,24 @@ def _fetch_api_football_lineups(config: Config, match: Match) -> dict[str, list[
         {"x-apisports-key": config.lineup_api_key or ""},
     )
     payload = json.loads(request.decode("utf-8"))
-    teams: dict[str, list[str]] = {}
+    teams: dict[str, TeamLineup] = {}
     for item in payload.get("response", []):
         team_name = item.get("team", {}).get("name")
+        formation = item.get("formation")
         players = [
             player.get("player", {}).get("name")
             for player in item.get("startXI", [])
             if player.get("player", {}).get("name")
         ]
         if team_name and players:
-            teams[str(team_name)] = [str(player) for player in players]
+            teams[str(team_name)] = TeamLineup(
+                players=[str(player) for player in players],
+                formation=str(formation) if formation else None,
+            )
     return teams or None
 
 
-def _fetch_sportmonks_lineups(config: Config, match: Match) -> dict[str, list[str]] | None:
+def _fetch_sportmonks_lineups(config: Config, match: Match) -> dict[str, TeamLineup] | None:
     official = _fetch_sportmonks_lineups_with_include(config, match, "participants;lineups.player")
     if official:
         return official
@@ -84,7 +88,7 @@ def _fetch_sportmonks_lineups(config: Config, match: Match) -> dict[str, list[st
         raise
 
 
-def _fetch_sportmonks_lineups_with_include(config: Config, match: Match, include: str) -> dict[str, list[str]] | None:
+def _fetch_sportmonks_lineups_with_include(config: Config, match: Match, include: str) -> dict[str, TeamLineup] | None:
     date = match.kickoff_time_utc.astimezone(UTC).date().isoformat()
     params = urlencode(
         {
@@ -109,7 +113,7 @@ def _fetch_sportmonks_lineups_with_include(config: Config, match: Match, include
     return None
 
 
-def _parse_sportmonks_lineups(item: dict) -> dict[str, list[str]] | None:
+def _parse_sportmonks_lineups(item: dict) -> dict[str, TeamLineup] | None:
     raw_lineups = item.get("lineups") or item.get("expectedLineups") or []
     if isinstance(raw_lineups, dict):
         raw_lineups = raw_lineups.get("data", [])
@@ -118,6 +122,7 @@ def _parse_sportmonks_lineups(item: dict) -> dict[str, list[str]] | None:
 
     participant_names = _sportmonks_participant_names(item)
     teams: dict[str, list[str]] = {}
+    formations: dict[str, str] = {}
     for lineup in raw_lineups:
         if not isinstance(lineup, dict) or not _is_starting_lineup_entry(lineup):
             continue
@@ -125,7 +130,14 @@ def _parse_sportmonks_lineups(item: dict) -> dict[str, list[str]] | None:
         player_name = _sportmonks_player_name(lineup)
         if team_name and player_name:
             teams.setdefault(team_name, []).append(player_name)
-    return {team: players for team, players in teams.items() if players} or None
+            formation = _sportmonks_formation(lineup)
+            if formation:
+                formations.setdefault(team_name, formation)
+    return {
+        team: TeamLineup(players=players, formation=formations.get(team))
+        for team, players in teams.items()
+        if players
+    } or None
 
 
 def _sportmonks_participant_names(item: dict) -> dict[str, str]:
@@ -167,6 +179,22 @@ def _sportmonks_player_name(lineup: dict) -> str | None:
     for key in ("player_name", "name", "display_name"):
         if lineup.get(key):
             return str(lineup[key])
+    return None
+
+
+def _sportmonks_formation(lineup: dict) -> str | None:
+    for key in ("formation", "formation_name", "formation_position_name"):
+        value = lineup.get(key)
+        if value and "-" in str(value):
+            return str(value)
+    details = lineup.get("details")
+    if isinstance(details, list):
+        for detail in details:
+            if not isinstance(detail, dict):
+                continue
+            value = detail.get("value") or detail.get("name")
+            if value and "-" in str(value):
+                return str(value)
     return None
 
 

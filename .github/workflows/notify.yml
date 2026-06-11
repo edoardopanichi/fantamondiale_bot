@@ -2,7 +2,10 @@ name: Notify World Cup Matches
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    # Europe/Amsterdam is UTC+2 during the June/July World Cup period.
+    # Runs every 30 minutes from 12:00 through 23:30 local time, plus 00:00.
+    - cron: "*/30 10-21 * * *"
+    - cron: "0 22 * * *"
   workflow_dispatch:
 
 concurrency:

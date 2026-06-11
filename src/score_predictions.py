@@ -12,7 +12,7 @@ def normalize_score_name(name: str) -> str:
     return name.strip().replace(":", "-").replace(" ", "")
 
 
-def rank_exact_scores(outcomes: list[dict], limit: int = 3) -> list[RankedOutcome]:
+def rank_exact_scores(outcomes: list[dict], limit: int = 4) -> list[RankedOutcome]:
     grouped: dict[str, list[tuple[float, str]]] = {}
     for outcome in outcomes:
         name = normalize_score_name(str(outcome.get("name", "")))

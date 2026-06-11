@@ -44,6 +44,10 @@ class Config:
     sportmonks_api_token: str | None
     notification_target_hours: float
     notification_window_minutes: int
+    first_notifications_enabled: bool
+    lineup_notifications_enabled: bool
+    lineup_notification_lead_minutes: int
+    lineup_notification_window_minutes: int
     lookahead_hours: float
     timezone: str
     dry_run: bool
@@ -55,11 +59,12 @@ class Config:
     odds_regions: str
     exact_score_markets: tuple[str, ...]
     goalscorer_markets: tuple[str, ...]
+    half_time_result_markets: tuple[str, ...]
 
 
 def load_config(args: object) -> Config:
     secrets = _load_local_secrets()
-    lookahead = float(getattr(args, "lookahead_hours", None) or _get_config_value("LOOKAHEAD_HOURS", secrets, "3"))
+    lookahead = float(getattr(args, "lookahead_hours", None) or _get_config_value("LOOKAHEAD_HOURS", secrets, "12"))
     dry_run = bool(getattr(args, "dry_run", False)) or _bool(_get_config_value("DRY_RUN", secrets))
     match_id = getattr(args, "match_id", None)
     return Config(
@@ -70,6 +75,10 @@ def load_config(args: object) -> Config:
         sportmonks_api_token=_get_config_value("SPORTMONKS_API_TOKEN", secrets),
         notification_target_hours=float(_get_config_value("NOTIFICATION_TARGET_HOURS", secrets, "3") or "3"),
         notification_window_minutes=int(_get_config_value("NOTIFICATION_WINDOW_MINUTES", secrets, "15") or "15"),
+        first_notifications_enabled=_bool(_get_config_value("ENABLE_FIRST_NOTIFICATION", secrets), True),
+        lineup_notifications_enabled=_bool(_get_config_value("ENABLE_LINEUP_NOTIFICATION", secrets), True),
+        lineup_notification_lead_minutes=int(_get_config_value("LINEUP_NOTIFICATION_LEAD_MINUTES", secrets, "60") or "60"),
+        lineup_notification_window_minutes=int(_get_config_value("LINEUP_NOTIFICATION_WINDOW_MINUTES", secrets, "15") or "15"),
         lookahead_hours=lookahead,
         timezone=_get_config_value("TIMEZONE", secrets, "Europe/Amsterdam") or "Europe/Amsterdam",
         dry_run=dry_run,
@@ -91,6 +100,11 @@ def load_config(args: object) -> Config:
                 secrets,
                 "player_goal_scorer_anytime,anytime_goalscorer,goalscorer_anytime",
             ) or "").split(",")
+            if item.strip()
+        ),
+        half_time_result_markets=tuple(
+            item.strip()
+            for item in (_get_config_value("HALF_TIME_RESULT_MARKETS", secrets, "h2h_3_way_h1,h2h_h1") or "").split(",")
             if item.strip()
         ),
     )

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from zoneinfo import ZoneInfo
 
 from .config import Config
 from .models import Match
 
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
+FIRST_NOTIFICATION = "first"
+LINEUP_NOTIFICATION = "lineup"
 
 STATIC_WORLD_CUP_MATCHES = [
     Match(
@@ -105,8 +108,48 @@ def _get_odds_api_matches(config: Config, now: datetime, until: datetime) -> lis
 
 
 def inside_notification_window(match: Match, config: Config, now: datetime | None = None) -> bool:
+    return FIRST_NOTIFICATION in due_notification_stages(match, config, now)
+
+
+def due_notification_stages(match: Match, config: Config, now: datetime | None = None) -> list[str]:
     now = now or datetime.now(UTC)
-    target = timedelta(hours=config.notification_target_hours)
-    window = timedelta(minutes=config.notification_window_minutes)
-    time_until = match.kickoff_time_utc - now
-    return target - window <= time_until <= target + window
+    stages = []
+    if config.first_notifications_enabled and _inside_first_notification_window(match, config, now):
+        stages.append(FIRST_NOTIFICATION)
+    if config.lineup_notifications_enabled and _inside_lineup_notification_window(match, config, now):
+        stages.append(LINEUP_NOTIFICATION)
+    return stages
+
+
+def manual_notification_stage(config: Config) -> str | None:
+    if config.first_notifications_enabled:
+        return FIRST_NOTIFICATION
+    if config.lineup_notifications_enabled:
+        return LINEUP_NOTIFICATION
+    return None
+
+
+def _inside_first_notification_window(match: Match, config: Config, now: datetime) -> bool:
+    local_tz = ZoneInfo(config.timezone)
+    local_kickoff = match.kickoff_time_utc.astimezone(local_tz)
+    if time(12, 0) <= local_kickoff.time() < time(23, 0):
+        target_utc = match.kickoff_time_utc - timedelta(hours=config.notification_target_hours)
+    else:
+        target_local = datetime.combine(
+            local_kickoff.date() - timedelta(days=1),
+            time(21, 0),
+            tzinfo=local_tz,
+        )
+        target_utc = target_local.astimezone(UTC)
+        if target_utc <= now < match.kickoff_time_utc:
+            return True
+    return _inside_target_window(target_utc, now, timedelta(minutes=config.notification_window_minutes))
+
+
+def _inside_lineup_notification_window(match: Match, config: Config, now: datetime) -> bool:
+    target_utc = match.kickoff_time_utc - timedelta(minutes=config.lineup_notification_lead_minutes)
+    return _inside_target_window(target_utc, now, timedelta(minutes=config.lineup_notification_window_minutes))
+
+
+def _inside_target_window(target_utc: datetime, now: datetime, window: timedelta) -> bool:
+    return target_utc - window <= now <= target_utc + window

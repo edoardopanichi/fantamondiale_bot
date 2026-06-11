@@ -1,15 +1,15 @@
 # Betting Match Notifier
 
-Python app that sends one Telegram alert about FIFA World Cup matches roughly 3 hours before kickoff. It is designed for GitHub Actions. No server, VPS, Docker container, or always-on process is required.
+Python app that sends Telegram alerts about FIFA World Cup matches. It sends a first alert either roughly 3 hours before daytime/evening kickoffs or from 21:00 the evening before overnight/early-morning kickoffs, plus a second lineup alert roughly 60 minutes before kickoff. It is designed for GitHub Actions. No server, VPS, Docker container, or always-on process is required.
 
-Each alert includes match details, probable lineups when available, the top 3 exact-score outcomes from odds, the top 3 anytime goalscorer outcomes from odds, and the sources used. Every data pipeline runs independently: if lineups fail, odds and Telegram still run; if exact-score odds fail, lineups/goalscorers/Telegram still run.
+Each alert includes match details, probable lineups and team modules/formations when available, the top 4 exact-score outcomes from odds, the top 3 half-time result outcomes from odds, and the top 4 anytime goalscorer outcomes from odds. Every data pipeline runs independently: if lineups fail, odds and Telegram still run; if exact-score odds fail, lineups/goalscorers/Telegram still run.
 
 ## Source Choices
 
 Research summary used for the implementation:
 
 - Fixtures: The Odds API events endpoint is preferred when `ODDS_API_KEY` is configured because it has stable documented sports/events endpoints. The app also includes a small FIFA 2026 opening-schedule fallback so local dry-run verification can detect the first matches without credentials. Reference: <https://the-odds-api.com/liveapi/guides/v4/>
-- Odds: The Odds API is preferred because it has official API access, bookmaker aggregation, event odds, and event market discovery. Correct-score and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS` and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>
+- Odds: The Odds API is preferred because it has official API access, bookmaker aggregation, event odds, and event market discovery. Correct-score, half-time result, and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS`, `HALF_TIME_RESULT_MARKETS`, and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>
 - Lineups: API-Football is tried first for official lineups via keyed API access. If it returns no lineup and `SPORTMONKS_API_TOKEN` is configured, Sportmonks is tried second. Sportmonks supports official `lineups` on fixture responses and offers a separate paid Expected Lineups add-on for predicted lineups before official lineups are published. Editorial sites such as Sports Mole, Goal.com, Sky, Gazzetta, Fantacalcio, and Transfermarkt can be useful manually, but scraping them is less stable and may conflict with site terms. References: <https://www.api-football.com/documentation-v3>, <https://docs.sportmonks.com/v3/endpoints-and-entities/endpoints/premium-expected-lineups>
 
 Provider keys that are actually mandatory:
@@ -32,7 +32,7 @@ requirements.txt
 README.md
 ```
 
-Notification state is stored in `data/sent_notifications.json`. GitHub Actions commits this file after a successful real notification so the same match is not sent twice.
+Notification state is stored in `data/sent_notifications.json`. GitHub Actions commits this file after a successful real notification so the same notification stage for the same match is not sent twice. First alerts and lineup alerts are tracked separately.
 
 ## Local Setup
 
@@ -132,13 +132,14 @@ git push -u origin main
 ```
 
 3. Keep the workflow at `.github/workflows/notify.yml`.
-4. The cron schedule runs every 30 minutes:
+4. The cron schedule runs every 30 minutes between noon and midnight in Europe/Amsterdam during the June/July World Cup period. GitHub cron is UTC, so the workflow uses 10:00-22:00 UTC:
 
 ```yaml
-cron: "*/30 * * * *"
+- cron: "*/30 10-21 * * *"
+- cron: "0 22 * * *"
 ```
 
-GitHub cron is UTC and may start a few minutes late. The app therefore accepts a 2h45m to 3h15m window before kickoff by default.
+GitHub cron may start a few minutes late. The app therefore accepts a 2h45m to 3h15m window before daytime/evening kickoffs by default, keeps overnight/early-morning first alerts eligible from 21:00 until kickoff if they have not already been sent, and accepts a 45m to 75m lineup-alert window by default.
 
 The workflow also uses a concurrency group, so two notification runs cannot overlap. This avoids a race where two jobs could both read the old notification state before either one commits the updated `data/sent_notifications.json` file.
 
@@ -171,13 +172,18 @@ LINEUP_API_KEY
 SPORTMONKS_API_TOKEN
 NOTIFICATION_TARGET_HOURS=3
 NOTIFICATION_WINDOW_MINUTES=15
-LOOKAHEAD_HOURS=3
+ENABLE_FIRST_NOTIFICATION=true
+ENABLE_LINEUP_NOTIFICATION=true
+LINEUP_NOTIFICATION_LEAD_MINUTES=60
+LINEUP_NOTIFICATION_WINDOW_MINUTES=15
+LOOKAHEAD_HOURS=12
 TIMEZONE=Europe/Amsterdam
 DRY_RUN=false
 ODDS_SPORT_KEY=soccer_fifa_world_cup
 ODDS_REGIONS=eu,uk
 EXACT_SCORE_MARKETS=correct_score,exact_score
 GOALSCORER_MARKETS=player_goal_scorer_anytime,anytime_goalscorer,goalscorer_anytime
+HALF_TIME_RESULT_MARKETS=h2h_3_way_h1,h2h_h1
 ```
 
 CLI arguments:
@@ -214,6 +220,10 @@ Sportmonks lineup limitation: official lineups are usually available close to ki
 GitHub Actions workflow not running: ensure `.github/workflows/notify.yml` exists on the default branch and Actions are enabled.
 
 Duplicate notification state problem: inspect or reset `data/sent_notifications.json`. Removing a match ID allows it to be sent again on a real run.
+
+First alert disabled: set `ENABLE_FIRST_NOTIFICATION=false`. This leaves only the lineup alert enabled.
+
+Lineup alert disabled: set `ENABLE_LINEUP_NOTIFICATION=false`. This leaves only the first alert enabled.
 
 ## Tests
 

@@ -8,8 +8,8 @@ from src.config import load_config
 from src.formatter import format_message
 from src.goalscorers import rank_goalscorers
 from src.main import run
-from src.matches import get_upcoming_matches, inside_notification_window
-from src.models import Match, PipelineResult, RankedOutcome
+from src.matches import LINEUP_NOTIFICATION, due_notification_stages, get_upcoming_matches, inside_notification_window
+from src.models import Match, PipelineResult, RankedOutcome, TeamLineup
 from src.probability import implied_probability
 from src.score_predictions import rank_exact_scores
 from src.storage import already_notified, load_notified, save_notified_match
@@ -39,9 +39,11 @@ def test_exact_score_ranking_ignores_match_winner_markets():
             {"name": "1-1", "price": 7.0, "source": "Book A"},
             {"name": "2-1", "price": 8.0, "source": "Book A"},
             {"name": "1:0", "price": 10.0, "source": "Book A"},
+            {"name": "0-0", "price": 11.0, "source": "Book A"},
+            {"name": "3-3", "price": 50.0, "source": "Book A"},
         ]
     )
-    assert [item.name for item in ranked] == ["1-1", "2-1", "1-0"]
+    assert [item.name for item in ranked] == ["1-1", "2-1", "1-0", "0-0"]
 
 
 def test_goalscorer_ranking_averages_sources():
@@ -65,13 +67,37 @@ def test_notification_window_logic():
     assert not inside_notification_window(outside, config, now)
 
 
+def test_evening_notification_for_overnight_match():
+    config = load_config(_args())
+    now = datetime(2026, 6, 10, 19, 0, tzinfo=UTC)  # 21:00 Europe/Amsterdam.
+    overnight = Match("night", "A", "B", datetime(2026, 6, 11, 4, 30, tzinfo=UTC), "test")
+    assert due_notification_stages(overnight, config, now) == ["first"]
+
+
+def test_evening_notification_for_overnight_match_catches_late_runs():
+    config = load_config(_args())
+    now = datetime(2026, 6, 10, 20, 15, tzinfo=UTC)  # 22:15 Europe/Amsterdam.
+    overnight = Match("night", "A", "B", datetime(2026, 6, 11, 4, 30, tzinfo=UTC), "test")
+    assert due_notification_stages(overnight, config, now) == ["first"]
+
+
+def test_lineup_notification_window():
+    config = load_config(_args())
+    match = Match("lineup", "A", "B", datetime(2026, 6, 11, 19, 0, tzinfo=UTC), "test")
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 0, tzinfo=UTC)) == [LINEUP_NOTIFICATION]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 20, tzinfo=UTC)) == []
+
+
 def test_duplicate_prevention(tmp_path: Path):
     path = tmp_path / "sent.json"
     assert load_notified(path) == set()
-    assert not already_notified("match-1", path)
-    save_notified_match("match-1", path)
-    save_notified_match("match-1", path)
+    assert not already_notified("match-1", path=path)
+    save_notified_match("match-1", path=path)
+    save_notified_match("match-1", path=path)
     assert load_notified(path) == {"match-1"}
+    assert not already_notified("match-1", LINEUP_NOTIFICATION, path)
+    save_notified_match("match-1", LINEUP_NOTIFICATION, path)
+    assert already_notified("match-1", LINEUP_NOTIFICATION, path)
 
 
 def test_formatter_handles_unavailable_pipelines():
@@ -86,7 +112,31 @@ def test_formatter_handles_unavailable_pipelines():
     assert "Mexico vs South Africa" in message
     assert "Probable lineup unavailable" in message
     assert "1. 1-0 (20.0%)" in message
+    assert "Half-time result odds unavailable" in message
     assert "Goalscorer odds unavailable" in message
+
+
+def test_formatter_includes_team_modules():
+    match = Match("m1", "Mexico", "South Africa", datetime(2026, 6, 11, 19, 0, tzinfo=UTC))
+    message = format_message(
+        match,
+        PipelineResult(
+            True,
+            data={
+                "Mexico": TeamLineup(["Player A", "Player B"], formation="4-4-2"),
+                "South Africa": TeamLineup(["Player C", "Player D"], formation="5-3-2"),
+            },
+            source="API-Football",
+        ),
+        PipelineResult(False, data=[]),
+        PipelineResult(False, data=[]),
+        "Europe/Amsterdam",
+        half_time_result=PipelineResult(True, data=[RankedOutcome("Draw", 0.45, ("Book A",))], source="Book A"),
+    )
+    assert "Module: 4-4-2" in message
+    assert "Module: 5-3-2" in message
+    assert "Most Likely Half-Time Results" in message
+    assert "1. Draw (45.0%)" in message
 
 
 def test_lookahead_hours_detects_opening_match(monkeypatch):
@@ -117,9 +167,10 @@ def test_real_run_saves_state_and_second_run_skips(tmp_path: Path, monkeypatch, 
     monkeypatch.chdir(tmp_path)
     match = Match("match-1", "Mexico", "South Africa", datetime(2026, 6, 11, 19, 0, tzinfo=UTC))
     monkeypatch.setattr("src.main.get_upcoming_matches", lambda config, now=None: [match])
-    monkeypatch.setattr("src.main.inside_notification_window", lambda match, config, now=None: True)
+    monkeypatch.setattr("src.main.due_notification_stages", lambda match, config, now=None: ["first"])
     monkeypatch.setattr("src.main.run_lineup_pipeline", lambda config, match: PipelineResult(False, error="none", source="test"))
     monkeypatch.setattr("src.main.run_exact_score_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
+    monkeypatch.setattr("src.main.run_half_time_result_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
     monkeypatch.setattr("src.main.run_goalscorer_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
     sent_messages = []
 

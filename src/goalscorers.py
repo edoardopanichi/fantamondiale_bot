@@ -4,7 +4,7 @@ from .models import RankedOutcome
 from .probability import average, implied_probability
 
 
-def rank_goalscorers(outcomes: list[dict], limit: int = 3) -> list[RankedOutcome]:
+def rank_goalscorers(outcomes: list[dict], limit: int = 4) -> list[RankedOutcome]:
     grouped: dict[str, list[tuple[float, str]]] = {}
     for outcome in outcomes:
         side = str(outcome.get("name") or "").strip().lower()

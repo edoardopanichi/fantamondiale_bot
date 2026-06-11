@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from zoneinfo import ZoneInfo
 
-from .models import Match, PipelineResult, RankedOutcome
+from .models import Match, PipelineResult, RankedOutcome, TeamLineup
 
 
 def _format_probability(value: float) -> str:
@@ -23,9 +23,15 @@ def _format_lineups(match: Match, result: PipelineResult) -> str:
         return "Probable lineup unavailable"
     blocks = []
     for team in (match.home_team, match.away_team):
-        players = result.data.get(team) or result.data.get(team.replace("USA", "United States"))
-        if players:
-            blocks.append(f"{team}\n" + "\n".join(players))
+        lineup = result.data.get(team) or result.data.get(team.replace("USA", "United States"))
+        if isinstance(lineup, TeamLineup) and lineup.players:
+            lines = [team]
+            if lineup.formation:
+                lines.append(f"Module: {lineup.formation}")
+            lines.extend(lineup.players)
+            blocks.append("\n".join(lines))
+        elif isinstance(lineup, list) and lineup:
+            blocks.append(f"{team}\n" + "\n".join(str(player) for player in lineup))
         else:
             blocks.append(f"{team}\nProbable lineup unavailable")
     return "\n\n".join(blocks)
@@ -37,24 +43,19 @@ def format_message(
     exact_score_result: PipelineResult,
     goalscorer_result: PipelineResult,
     timezone: str,
+    notification_stage: str | None = None,
+    half_time_result: PipelineResult | None = None,
 ) -> str:
     local_kickoff = match.kickoff_time_utc.astimezone(ZoneInfo(timezone))
     exact_scores = exact_score_result.data if isinstance(exact_score_result.data, list) else []
     goalscorers = goalscorer_result.data if isinstance(goalscorer_result.data, list) else []
-    lineup_source = lineup_result.source or "Unavailable"
-    odds_sources = sorted(
-        {
-            source
-            for result in (exact_score_result, goalscorer_result)
-            for source in (result.source or "").split(", ")
-            if source
-        }
-    )
-    if not odds_sources:
-        odds_sources = ["Unavailable"]
+    half_time_results = half_time_result.data if half_time_result and isinstance(half_time_result.data, list) else []
+    title = "World Cup Match Alert"
+    if notification_stage == "lineup":
+        title = "World Cup Lineup Alert"
     return "\n".join(
         [
-            "World Cup Match Alert",
+            title,
             "",
             "Match:",
             f"{match.home_team} vs {match.away_team}",
@@ -70,14 +71,12 @@ def format_message(
             "",
             _format_ranked(exact_scores, "Exact score odds unavailable"),
             "",
+            "Most Likely Half-Time Results",
+            "",
+            _format_ranked(half_time_results, "Half-time result odds unavailable"),
+            "",
             "Most Likely Goalscorers",
             "",
             _format_ranked(goalscorers, "Goalscorer odds unavailable"),
-            "",
-            "Lineup Source:",
-            lineup_source,
-            "",
-            "Odds Sources:",
-            "\n".join(odds_sources),
         ]
     )

@@ -23,6 +23,12 @@ class PipelineResult:
 
 
 @dataclass(frozen=True)
+class TeamLineup:
+    players: list[str]
+    formation: str | None = None
+
+
+@dataclass(frozen=True)
 class RankedOutcome:
     name: str
     probability: float
