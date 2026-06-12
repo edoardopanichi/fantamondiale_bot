@@ -8,6 +8,7 @@ from urllib.parse import parse_qs
 from src.config import load_config
 from src.formatter import format_message
 from src.goalscorers import rank_goalscorers
+from src.lineup_provider import run_lineup_pipeline
 from src.main import run
 from src.matches import LINEUP_NOTIFICATION, due_notification_stages, get_upcoming_matches, inside_notification_window
 from src.models import Match, PipelineResult, RankedOutcome, TeamLineup
@@ -139,8 +140,141 @@ def test_formatter_includes_team_modules():
     )
     assert "Module: 4-4-2" in message
     assert "Module: 5-3-2" in message
+    assert "Lineup source: API-Football" in message
     assert "Most Likely Half-Time Results" in message
     assert "1. <b>Draw</b> <i>45.0%</i>" in message
+
+
+def test_formatter_includes_unavailable_lineup_source():
+    match = Match("m1", "Mexico", "South Africa", datetime(2026, 6, 11, 19, 0, tzinfo=UTC))
+    message = format_message(
+        match,
+        PipelineResult(False, data=None, error="none", source="API-Football, Goal.com predicted lineups"),
+        PipelineResult(False, data=[]),
+        PipelineResult(False, data=[]),
+        "Europe/Amsterdam",
+    )
+    assert "Lineup source: unavailable after trying API-Football, Goal.com predicted lineups" in message
+
+
+def test_lineup_pipeline_discovers_goal_article_from_sitemap(monkeypatch):
+    match = Match("m1", "USA", "Paraguay", datetime(2026, 6, 12, 19, 0, tzinfo=UTC))
+    sitemap = (
+        "https://www.goal.com/it/notizie/dove-vedere-usa-paraguay-diretta-tv-streaming-online/blt1"
+        "<loc>https://www.goal.com/it/notizie/formazioni-usa-paraguay-le-ultime-sulla-partita-e-dove-vederla-in-tv-e-in-streaming/blt2</loc>"
+    )
+    players = "".join(
+        f'<li class="fco-paired-player-list__row">'
+        f'<span class="fco-player-row-content__player-name">Home {index}</span>'
+        f'<span class="fco-player-row-content__player-name">Away {index}</span>'
+        f"</li>"
+        for index in range(1, 12)
+    )
+    article = (
+        '<section class="fco-football-match-lineups">'
+        '<span class="fco-pitch-lineup-header__formation">3-4-2-1</span>'
+        '<span>4-3-3</span></div></div><div class="fco-field">'
+        f"{players}</section>"
+    )
+    calls = []
+
+    def fake_urlopen(url, headers, timeout=20):
+        calls.append(url)
+        if "sitemap" in url:
+            return sitemap.encode("utf-8")
+        if "formazioni-usa-paraguay" in url:
+            return article.encode("utf-8")
+        return b"<html></html>"
+
+    monkeypatch.setattr("src.lineup_provider.urlopen_with_headers", fake_urlopen)
+    config = load_config(_args())
+    result = run_lineup_pipeline(config, match)
+
+    assert result.success
+    assert result.source == "Goal.com predicted lineups"
+    assert result.data["USA"].formation == "3-4-2-1"
+    assert result.data["Paraguay"].players[-1] == "Away 11"
+    assert any("formazioni-usa-paraguay" in call for call in calls)
+
+
+def test_lineup_pipeline_uses_talksport_after_goal(monkeypatch):
+    match = Match("m1", "Canada", "Bosnia", datetime(2026, 6, 12, 19, 0, tzinfo=UTC))
+    search_payload = json_bytes(
+        [
+            {
+                "id": 4318267,
+                "title": "Canada vs Bosnia prediction",
+                "url": "https://talksport.com/betting/4318267/canada-vs-bosnia-world-cup-preview/",
+            }
+        ]
+    )
+    post_payload = json_bytes(
+        {
+            "content": {
+                "rendered": (
+                    "<p>Canada vs Bosnia predicted lineups</p>"
+                    "<p>Canada (4-4-2): Crepeau (GK); Johnston, Cornelius, Bombito, Laryea; "
+                    "Buchanan, Kone, Eustaquio, Millar; J David, Larin</p>"
+                    "<p>Bosnia (4-4-2): Vasilj (GK); Dedic, Katic, Muharemovic, Kolasinac; "
+                    "Bajraktarevic, Basic, Sunjic, Memic; Demirovic, Dzeko</p>"
+                )
+            }
+        }
+    )
+
+    def fake_urlopen(url, headers, timeout=20):
+        if "goal.com" in url:
+            return b"<urlset></urlset>" if "sitemap" in url else b"<html></html>"
+        if "wp-json/wp/v2/search" in url:
+            return search_payload
+        if "wp-json/wp/v2/posts/4318267" in url:
+            return post_payload
+        raise AssertionError(url)
+
+    monkeypatch.setattr("src.lineup_provider.urlopen_with_headers", fake_urlopen)
+    config = load_config(_args())
+    result = run_lineup_pipeline(config, match)
+
+    assert result.success
+    assert result.source == "TalkSport predicted lineups"
+    assert result.data["Canada"].players[0] == "Crepeau"
+    assert result.data["Bosnia"].formation == "4-4-2"
+
+
+def test_lineup_pipeline_uses_static_database_when_editorial_sources_fail(monkeypatch):
+    match = Match("m1", "USA", "Paraguay", datetime(2026, 6, 12, 19, 0, tzinfo=UTC))
+
+    def fake_urlopen(url, headers, timeout=20):
+        if "goal.com" in url:
+            return b"<urlset></urlset>" if "sitemap" in url else b"<html></html>"
+        if "wp-json/wp/v2/search" in url:
+            return b"[]"
+        raise AssertionError(url)
+
+    monkeypatch.setattr("src.lineup_provider.urlopen_with_headers", fake_urlopen)
+    config = load_config(_args())
+    result = run_lineup_pipeline(config, match)
+
+    assert result.success
+    assert result.source == "Local static team database"
+    assert result.data["USA"].formation == "4-3-3"
+    assert result.data["Paraguay"].players[-1] == "Avalos"
+
+
+def test_static_lineup_database_covers_all_world_cup_teams():
+    import json
+
+    payload = json.loads(Path("data/static_team_lineups.json").read_text(encoding="utf-8"))
+
+    assert len(payload) == 48
+    assert all(len(team["players"]) == 11 for team in payload.values())
+    assert all(team["formation"] for team in payload.values())
+
+
+def json_bytes(payload):
+    import json
+
+    return json.dumps(payload).encode("utf-8")
 
 
 def test_telegram_client_requests_html_parse_mode(monkeypatch):
@@ -197,7 +331,8 @@ def test_dry_run_does_not_save_notification_state(tmp_path: Path, monkeypatch, c
     assert not Path("data/sent_notifications.json").exists()
     output = capsys.readouterr().out
     assert "Matches found" in output
-    assert "Lineup pipeline result: failed" in output
+    assert "Lineup pipeline result: success" in output
+    assert "Lineup source: Local static team database" in output
     assert "Exact score pipeline result: failed" in output
     assert "Goalscorer pipeline result: failed" in output
     assert "Telegram send result: success" in output

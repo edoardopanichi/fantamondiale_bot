@@ -10,7 +10,7 @@ Research summary used for the implementation:
 
 - Fixtures: The Odds API events endpoint is preferred when `ODDS_API_KEY` is configured because it has stable documented sports/events endpoints. The app also includes a small FIFA 2026 opening-schedule fallback so local dry-run verification can detect the first matches without credentials. Reference: <https://the-odds-api.com/liveapi/guides/v4/>
 - Odds: The Odds API is preferred because it has official API access, bookmaker aggregation, event odds, and event market discovery. Correct-score, half-time result, and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS`, `HALF_TIME_RESULT_MARKETS`, and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>
-- Lineups: API-Football is tried first for official lineups via keyed API access. If it returns no lineup and `SPORTMONKS_API_TOKEN` is configured, Sportmonks is tried second. Sportmonks supports official `lineups` on fixture responses and offers a separate paid Expected Lineups add-on for predicted lineups before official lineups are published. Editorial sites such as Sports Mole, Goal.com, Sky, Gazzetta, Fantacalcio, and Transfermarkt can be useful manually, but scraping them is less stable and may conflict with site terms. References: <https://www.api-football.com/documentation-v3>, <https://docs.sportmonks.com/v3/endpoints-and-entities/endpoints/premium-expected-lineups>
+- Lineups: API-Football is tried first for official lineups via keyed API access. If it returns no lineup and `SPORTMONKS_API_TOKEN` is configured, Sportmonks is tried second, including the paid `expectedLineups` include when available. If API providers do not return a lineup, the app tries Goal.com Italian sitemap discovery for match-specific predicted lineup pages, then TalkSport's WordPress JSON search for match previews, then the local static team database in `data/static_team_lineups.json`, which contains all 48 national-team lineups from the Sky Sport formation guide. The Telegram message states which source was used. References: <https://www.api-football.com/documentation-v3>, <https://docs.sportmonks.com/v3/endpoints-and-entities/endpoints/premium-expected-lineups>
 
 Provider keys that are actually mandatory:
 
@@ -19,7 +19,7 @@ Provider keys that are actually mandatory:
 - `LINEUP_API_KEY` enables API-Football lineup retrieval.
 - `SPORTMONKS_API_TOKEN` optionally enables Sportmonks as a second lineup provider.
 
-Without odds or lineup keys, the app still sends the Telegram message with clear unavailable sections.
+Without odds or lineup keys, the app still sends the Telegram message. Lineups can still be filled by the editorial or static fallbacks; unavailable sections remain clearly marked.
 
 ## Repository Structure
 
@@ -211,11 +211,11 @@ Missing GitHub secret: add it under repository Settings -> Secrets and variables
 
 Odds API unavailable: the exact-score and goalscorer sections become unavailable, but the notification still sends.
 
-Lineup source unavailable: the lineup section shows "Probable lineup unavailable", but the notification still sends.
+Lineup source unavailable: the lineup section shows "Lineup source: unavailable after trying ..." and "Probable lineup unavailable", but the notification still sends.
 
 API-Football free-plan limitation: as of the June 10, 2026 verification run, API-Football exposes the 2026 World Cup fixture by date and fixture-level odds by fixture ID, but its league-season query reports that free plans do not have access to the 2026 season and the lineup endpoint returns no lineup rows for the Mexico vs South Africa opener.
 
-Sportmonks lineup limitation: official lineups are usually available close to kickoff. Predicted lineups before official publication require Sportmonks' paid Expected Lineups add-on, which was listed as a partner add-on in their documentation.
+Sportmonks lineup limitation: official lineups are usually available close to kickoff. Predicted lineups before official publication require Sportmonks' paid Expected Lineups add-on, which was listed as a partner add-on in their documentation. If that add-on is not available, the app continues to Goal.com, TalkSport, and static fallbacks.
 
 GitHub Actions workflow not running: ensure `.github/workflows/notify.yml` exists on the default branch and Actions are enabled.
 
