@@ -18,6 +18,7 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    environment: Notify World Cup Matches
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
