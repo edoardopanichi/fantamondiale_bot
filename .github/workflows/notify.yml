@@ -33,7 +33,7 @@ jobs:
           LINEUP_API_KEY: ${{ secrets.LINEUP_API_KEY }}
           SPORTMONKS_API_TOKEN: ${{ secrets.SPORTMONKS_API_TOKEN }}
           TIMEZONE: Europe/Amsterdam
-        run: python -m src.main --lookahead-hours 24 --manual-override
+        run: python -m src.main
       - name: Commit notification state
         run: |
           git config user.name "github-actions[bot]"
