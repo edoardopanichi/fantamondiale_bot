@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from argparse import Namespace
 from datetime import UTC, datetime, timedelta
+import json
 from pathlib import Path
 from urllib.parse import parse_qs
+
+import pytest
 
 from src.config import load_config
 from src.formatter import format_message
 from src.goalscorers import rank_goalscorers
-from src.lineup_provider import run_lineup_pipeline
+from src.lineup_provider import _normalize_team, _team_url_terms, run_lineup_pipeline
 from src.main import run
 from src.matches import LINEUP_NOTIFICATION, due_notification_stages, get_upcoming_matches, inside_notification_window
 from src.models import Match, PipelineResult, RankedOutcome, TeamLineup
@@ -16,6 +19,11 @@ from src.probability import implied_probability
 from src.score_predictions import rank_exact_scores
 from src.storage import already_notified, load_notified, save_notified_match
 from src.telegram_client import send_telegram_message
+
+
+@pytest.fixture(autouse=True)
+def _ignore_local_secrets(monkeypatch):
+    monkeypatch.setattr("src.config._load_local_secrets", lambda path=None: {})
 
 
 def _args(**overrides):
@@ -87,8 +95,32 @@ def test_evening_notification_for_overnight_match_catches_late_runs():
 def test_lineup_notification_window():
     config = load_config(_args())
     match = Match("lineup", "A", "B", datetime(2026, 6, 11, 19, 0, tzinfo=UTC), "test")
-    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 0, tzinfo=UTC)) == [LINEUP_NOTIFICATION]
-    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 20, tzinfo=UTC)) == []
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 15, tzinfo=UTC)) == [LINEUP_NOTIFICATION]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 30, tzinfo=UTC)) == [LINEUP_NOTIFICATION]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 17, 59, tzinfo=UTC)) == []
+
+
+def test_late_evening_and_midnight_matches_get_first_and_lineup_alerts():
+    config = load_config(_args())
+    late_evening = Match("late", "A", "B", datetime(2026, 6, 11, 21, 0, tzinfo=UTC), "test")
+    midnight = Match("midnight", "A", "B", datetime(2026, 6, 11, 22, 0, tzinfo=UTC), "test")
+
+    assert due_notification_stages(late_evening, config, datetime(2026, 6, 11, 18, 0, tzinfo=UTC)) == ["first"]
+    assert due_notification_stages(late_evening, config, datetime(2026, 6, 11, 20, 15, tzinfo=UTC)) == [
+        LINEUP_NOTIFICATION
+    ]
+    assert due_notification_stages(midnight, config, datetime(2026, 6, 11, 19, 0, tzinfo=UTC)) == ["first"]
+    assert due_notification_stages(midnight, config, datetime(2026, 6, 11, 21, 15, tzinfo=UTC)) == [
+        LINEUP_NOTIFICATION
+    ]
+
+
+def test_early_morning_matches_do_not_get_lineup_alert():
+    config = load_config(_args())
+    early_morning = Match("early", "A", "B", datetime(2026, 6, 11, 2, 0, tzinfo=UTC), "test")
+
+    assert due_notification_stages(early_morning, config, datetime(2026, 6, 10, 19, 0, tzinfo=UTC)) == ["first"]
+    assert due_notification_stages(early_morning, config, datetime(2026, 6, 11, 1, 15, tzinfo=UTC)) == ["first"]
 
 
 def test_duplicate_prevention(tmp_path: Path):
@@ -195,6 +227,94 @@ def test_lineup_pipeline_discovers_goal_article_from_sitemap(monkeypatch):
     assert result.data["USA"].formation == "3-4-2-1"
     assert result.data["Paraguay"].players[-1] == "Away 11"
     assert any("formazioni-usa-paraguay" in call for call in calls)
+
+
+def test_goal_sitemap_discovery_handles_italian_and_encoded_team_names(monkeypatch):
+    match = Match("m1", "Germany", "Curaçao", datetime(2026, 6, 14, 16, 0, tzinfo=UTC))
+    sitemap = (
+        "<loc>https://www.goal.com/it/notizie/"
+        "dove-vedere-germania-curac%CC%A7ao-diretta-tv-streaming-online/blt1</loc>"
+    )
+    players = "".join(
+        f'<li class="fco-paired-player-list__row">'
+        f'<span class="fco-player-row-content__player-name">Germany {index}</span>'
+        f'<span class="fco-player-row-content__player-name">Curacao {index}</span>'
+        f"</li>"
+        for index in range(1, 12)
+    )
+    article = (
+        '<section class="fco-football-match-lineups">'
+        '<span class="fco-pitch-lineup-header__formation">4-2-3-1</span>'
+        '<span>4-3-1-2</span></div></div><div class="fco-field">'
+        f"{players}</section>"
+    )
+
+    def fake_urlopen(url, headers, timeout=20):
+        if "sitemap" in url:
+            return sitemap.encode("utf-8")
+        if "germania-curac%CC%A7ao" in url:
+            return article.encode("utf-8")
+        return b"<html></html>"
+
+    monkeypatch.setattr("src.lineup_provider.urlopen_with_headers", fake_urlopen)
+    config = load_config(_args())
+    result = run_lineup_pipeline(config, match)
+
+    assert result.success
+    assert result.source == "Goal.com predicted lineups"
+    assert result.data["Germany"].formation == "4-2-3-1"
+    assert result.data["Curaçao"].players[-1] == "Curacao 11"
+
+
+@pytest.mark.parametrize(
+    ("team", "expected_terms"),
+    [
+        ("Belgium", {"belgio"}),
+        ("Brazil", {"brasile"}),
+        ("Czech Republic", {"repubblica-ceca", "cechia"}),
+        ("DR Congo", {"rd-congo", "repubblica-democratica-del-congo"}),
+        ("Egypt", {"egitto"}),
+        ("England", {"inghilterra"}),
+        ("France", {"francia"}),
+        ("Germany", {"germania"}),
+        ("Ivory Coast", {"costa-d-avorio"}),
+        ("Japan", {"giappone"}),
+        ("Mexico", {"messico"}),
+        ("Netherlands", {"olanda", "paesi-bassi"}),
+        ("Saudi Arabia", {"arabia-saudita"}),
+        ("South Africa", {"sudafrica"}),
+        ("South Korea", {"corea-del-sud"}),
+        ("Spain", {"spagna"}),
+        ("Switzerland", {"svizzera"}),
+        ("Turkey", {"turchia"}),
+        ("United States", {"usa", "stati-uniti"}),
+    ],
+)
+def test_goal_url_terms_include_italian_team_names(team, expected_terms):
+    assert expected_terms <= _team_url_terms(team)
+
+
+def test_goal_url_terms_cover_static_world_cup_teams():
+    payload = json.loads(Path("data/static_team_lineups.json").read_text(encoding="utf-8"))
+    missing = [team for team in payload if not _team_url_terms(team)]
+    assert missing == []
+
+
+@pytest.mark.parametrize(
+    ("italian_name", "canonical"),
+    [
+        ("Francia", "france"),
+        ("Inghilterra", "england"),
+        ("Olanda", "netherlands"),
+        ("Paesi Bassi", "netherlands"),
+        ("Costa d'Avorio", "ivory coast"),
+        ("Arabia Saudita", "saudi arabia"),
+        ("Corea del Sud", "south korea"),
+        ("Repubblica Ceca", "czech republic"),
+    ],
+)
+def test_normalize_team_accepts_common_italian_names(italian_name, canonical):
+    assert _normalize_team(italian_name) == canonical
 
 
 def test_lineup_pipeline_uses_talksport_after_goal(monkeypatch):

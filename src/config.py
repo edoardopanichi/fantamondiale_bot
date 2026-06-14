@@ -77,7 +77,7 @@ def load_config(args: object) -> Config:
         notification_window_minutes=int(_get_config_value("NOTIFICATION_WINDOW_MINUTES", secrets, "15") or "15"),
         first_notifications_enabled=_bool(_get_config_value("ENABLE_FIRST_NOTIFICATION", secrets), True),
         lineup_notifications_enabled=_bool(_get_config_value("ENABLE_LINEUP_NOTIFICATION", secrets), True),
-        lineup_notification_lead_minutes=int(_get_config_value("LINEUP_NOTIFICATION_LEAD_MINUTES", secrets, "60") or "60"),
+        lineup_notification_lead_minutes=int(_get_config_value("LINEUP_NOTIFICATION_LEAD_MINUTES", secrets, "45") or "45"),
         lineup_notification_window_minutes=int(_get_config_value("LINEUP_NOTIFICATION_WINDOW_MINUTES", secrets, "15") or "15"),
         lookahead_hours=lookahead,
         timezone=_get_config_value("TIMEZONE", secrets, "Europe/Amsterdam") or "Europe/Amsterdam",

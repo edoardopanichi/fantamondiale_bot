@@ -1,6 +1,6 @@
 # Betting Match Notifier
 
-Python app that sends Telegram alerts about FIFA World Cup matches. It sends a first alert either roughly 3 hours before daytime/evening kickoffs or from 21:00 the evening before overnight/early-morning kickoffs, plus a second lineup alert roughly 60 minutes before kickoff. It is designed for GitHub Actions. No server, VPS, Docker container, or always-on process is required.
+Python app that sends Telegram alerts about FIFA World Cup matches. For matches from noon through 00:59 Europe/Amsterdam, it sends a first alert roughly 3 hours before kickoff plus a second lineup alert roughly 60 to 30 minutes before kickoff. For overnight and early-morning matches from 01:00 through 11:59, it sends only one alert from 21:00 the evening before kickoff. It is designed for GitHub Actions. No server, VPS, Docker container, or always-on process is required.
 
 Each alert includes match details, probable lineups and team modules/formations when available, the top 4 exact-score outcomes from odds, the top 3 half-time result outcomes from odds, and the top 4 anytime goalscorer outcomes from odds. Every data pipeline runs independently: if lineups fail, odds and Telegram still run; if exact-score odds fail, lineups/goalscorers/Telegram still run.
 
@@ -132,14 +132,14 @@ git push -u origin main
 ```
 
 3. Keep the workflow at `.github/workflows/notify.yml`.
-4. The cron schedule runs every 30 minutes between noon and midnight in Europe/Amsterdam during the June/July World Cup period. GitHub cron is UTC, so the workflow uses 10:00-22:00 UTC:
+4. The cron schedule runs every 30 minutes between noon and midnight in Europe/Amsterdam during the June/July World Cup period. GitHub cron is UTC, so the workflow uses offset minutes in 10:00-22:00 UTC to avoid the busier `:00` and `:30` GitHub Actions schedule slots:
 
 ```yaml
-- cron: "*/30 10-21 * * *"
-- cron: "0 22 * * *"
+- cron: "7,37 10-21 * * *"
+- cron: "7 22 * * *"
 ```
 
-GitHub cron may start a few minutes late. The app therefore accepts a 2h45m to 3h15m window before daytime/evening kickoffs by default, keeps overnight/early-morning first alerts eligible from 21:00 until kickoff if they have not already been sent, and accepts a 45m to 75m lineup-alert window by default.
+GitHub cron may start a few minutes late or skip scheduled runs under high load. The app therefore accepts a 2h45m to 3h15m window before noon-through-00:59 kickoffs by default, keeps overnight/early-morning first alerts eligible from 21:00 until kickoff if they have not already been sent, and accepts a 30m to 60m lineup-alert window by default for noon-through-00:59 kickoffs.
 
 The workflow also uses a concurrency group, so two notification runs cannot overlap. This avoids a race where two jobs could both read the old notification state before either one commits the updated `data/sent_notifications.json` file.
 
@@ -174,7 +174,7 @@ NOTIFICATION_TARGET_HOURS=3
 NOTIFICATION_WINDOW_MINUTES=15
 ENABLE_FIRST_NOTIFICATION=true
 ENABLE_LINEUP_NOTIFICATION=true
-LINEUP_NOTIFICATION_LEAD_MINUTES=60
+LINEUP_NOTIFICATION_LEAD_MINUTES=45
 LINEUP_NOTIFICATION_WINDOW_MINUTES=15
 LOOKAHEAD_HOURS=12
 TIMEZONE=Europe/Amsterdam

@@ -132,9 +132,7 @@ def manual_notification_stage(config: Config) -> str | None:
 def _inside_first_notification_window(match: Match, config: Config, now: datetime) -> bool:
     local_tz = ZoneInfo(config.timezone)
     local_kickoff = match.kickoff_time_utc.astimezone(local_tz)
-    if time(12, 0) <= local_kickoff.time() < time(23, 0):
-        target_utc = match.kickoff_time_utc - timedelta(hours=config.notification_target_hours)
-    else:
+    if _is_overnight_early_morning(local_kickoff.time()):
         target_local = datetime.combine(
             local_kickoff.date() - timedelta(days=1),
             time(21, 0),
@@ -143,12 +141,22 @@ def _inside_first_notification_window(match: Match, config: Config, now: datetim
         target_utc = target_local.astimezone(UTC)
         if target_utc <= now < match.kickoff_time_utc:
             return True
+    else:
+        target_utc = match.kickoff_time_utc - timedelta(hours=config.notification_target_hours)
     return _inside_target_window(target_utc, now, timedelta(minutes=config.notification_window_minutes))
 
 
 def _inside_lineup_notification_window(match: Match, config: Config, now: datetime) -> bool:
+    local_tz = ZoneInfo(config.timezone)
+    local_kickoff = match.kickoff_time_utc.astimezone(local_tz)
+    if _is_overnight_early_morning(local_kickoff.time()):
+        return False
     target_utc = match.kickoff_time_utc - timedelta(minutes=config.lineup_notification_lead_minutes)
     return _inside_target_window(target_utc, now, timedelta(minutes=config.lineup_notification_window_minutes))
+
+
+def _is_overnight_early_morning(local_kickoff_time: time) -> bool:
+    return time(1, 0) <= local_kickoff_time < time(12, 0)
 
 
 def _inside_target_window(target_utc: datetime, now: datetime, window: timedelta) -> bool:

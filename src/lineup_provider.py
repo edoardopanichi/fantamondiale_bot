@@ -5,8 +5,9 @@ from html import unescape
 import json
 from pathlib import Path
 import re
+import unicodedata
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote_plus, urlencode
+from urllib.parse import quote_plus, unquote, urlencode
 from urllib.request import urlopen
 
 from .config import Config
@@ -19,6 +20,37 @@ GOAL_SITEMAPS = (
 TALKSPORT_SEARCH_URL = "https://talksport.com/wp-json/wp/v2/search"
 TALKSPORT_POST_URL = "https://talksport.com/wp-json/wp/v2/posts/{post_id}"
 STATIC_LINEUPS_PATH = Path(__file__).resolve().parents[1] / "data" / "static_team_lineups.json"
+GOAL_TEAM_URL_ALIASES = {
+    "belgium": {"belgio"},
+    "brazil": {"brasile"},
+    "bosnia & herzegovina": {"bosnia", "bosnia-erzegovina", "bosnia-ed-erzegovina"},
+    "cape verde": {"capo-verde"},
+    "croatia": {"croazia"},
+    "czech republic": {"cechia", "repubblica-ceca"},
+    "dr congo": {"rd-congo", "repubblica-democratica-del-congo", "repubblica-democratica-congo"},
+    "egypt": {"egitto"},
+    "england": {"inghilterra"},
+    "france": {"francia"},
+    "germany": {"germania"},
+    "ivory coast": {"costa-d-avorio", "costa-avorio"},
+    "japan": {"giappone"},
+    "jordan": {"giordania"},
+    "mexico": {"messico"},
+    "morocco": {"marocco"},
+    "netherlands": {"olanda", "paesi-bassi"},
+    "new zealand": {"nuova-zelanda"},
+    "norway": {"norvegia"},
+    "portugal": {"portogallo"},
+    "saudi arabia": {"arabia-saudita"},
+    "scotland": {"scozia"},
+    "south africa": {"sudafrica", "sud-africa"},
+    "south korea": {"corea-del-sud", "corea-sud"},
+    "spain": {"spagna"},
+    "sweden": {"svezia"},
+    "switzerland": {"svizzera"},
+    "turkey": {"turchia"},
+    "united states": {"usa", "stati-uniti", "nazionale-usa"},
+}
 
 
 def run_lineup_pipeline(config: Config, match: Match) -> PipelineResult:
@@ -413,6 +445,36 @@ def resolve_api_football_fixture_id(config: Config, match: Match) -> str | None:
 
 def _normalize_team(value: str) -> str:
     aliases = {
+        "belgio": "belgium",
+        "brasile": "brazil",
+        "capo verde": "cape verde",
+        "cechia": "czech republic",
+        "corea del sud": "south korea",
+        "corea sud": "south korea",
+        "croazia": "croatia",
+        "egitto": "egypt",
+        "francia": "france",
+        "germania": "germany",
+        "giappone": "japan",
+        "giordania": "jordan",
+        "inghilterra": "england",
+        "marocco": "morocco",
+        "messico": "mexico",
+        "norvegia": "norway",
+        "nuova zelanda": "new zealand",
+        "olanda": "netherlands",
+        "paesi bassi": "netherlands",
+        "portogallo": "portugal",
+        "repubblica ceca": "czech republic",
+        "repubblica democratica congo": "dr congo",
+        "repubblica democratica del congo": "dr congo",
+        "scozia": "scotland",
+        "spagna": "spain",
+        "sudafrica": "south africa",
+        "sud africa": "south africa",
+        "svezia": "sweden",
+        "svizzera": "switzerland",
+        "turchia": "turkey",
         "usa": "united states",
         "u s a": "united states",
         "usmnt": "united states",
@@ -423,8 +485,10 @@ def _normalize_team(value: str) -> str:
         "côte d ivoire": "ivory coast",
         "costa d’avorio": "ivory coast",
         "costa d'avorio": "ivory coast",
+        "costa d avorio": "ivory coast",
         "curaçao": "curacao",
         "saudi arabia": "saudi arabia",
+        "arabia saudita": "saudi arabia",
         "saudi": "saudi arabia",
         "congo dr": "dr congo",
         "democratic republic of congo": "dr congo",
@@ -435,7 +499,8 @@ def _normalize_team(value: str) -> str:
         "bosnia and herzegovina": "bosnia & herzegovina",
     }
     normalized = " ".join(
-        value.lower()
+        _strip_diacritics(value)
+        .lower()
         .replace("-", " ")
         .replace("&", " & ")
         .replace("'", " ")
@@ -448,10 +513,7 @@ def _normalize_team(value: str) -> str:
 def _team_url_terms(team: str) -> set[str]:
     normalized = _normalize_team(team)
     terms = {normalized.replace(" & ", "-"), normalized.replace(" ", "-").replace("&", "and")}
-    if normalized == "united states":
-        terms.update({"usa", "stati-uniti", "nazionale-usa"})
-    if normalized == "bosnia & herzegovina":
-        terms.update({"bosnia", "bosnia-ed-erzegovina", "bosnia-herzegovina"})
+    terms.update(GOAL_TEAM_URL_ALIASES.get(normalized, set()))
     return {term for term in terms if term}
 
 
@@ -462,6 +524,7 @@ def _team_text_terms(team: str) -> set[str]:
         terms.update({"USA", "United States", "Stati Uniti"})
     if normalized == "bosnia & herzegovina":
         terms.update({"Bosnia", "Bosnia ed Erzegovina", "Bosnia and Herzegovina", "Bosnia & Herzegovina"})
+    terms.update(term.replace("-", " ") for term in GOAL_TEAM_URL_ALIASES.get(normalized, set()))
     return {term for term in terms if term}
 
 
@@ -470,7 +533,16 @@ def _contains_any(value: str, terms: set[str]) -> bool:
 
 
 def _normalize_url_text(value: str) -> str:
-    return unescape(value).lower().replace("_", "-").replace("%20", "-")
+    decoded = unquote(unescape(value))
+    return _strip_diacritics(decoded).lower().replace("_", "-").replace("%20", "-")
+
+
+def _strip_diacritics(value: str) -> str:
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", value)
+        if not unicodedata.combining(char)
+    )
 
 
 def _clean_text(value: str) -> str:
