@@ -33,6 +33,7 @@ def _args(**overrides):
         "match_id": None,
         "send_test_telegram": False,
         "manual_override": False,
+        "force_notifications": False,
         "save_dry_run": False,
     }
     values.update(overrides)
@@ -73,9 +74,20 @@ def test_notification_window_logic():
     config = load_config(_args())
     now = datetime(2026, 6, 10, 12, 0, tzinfo=UTC)
     inside = Match("a", "A", "B", now + timedelta(hours=3), "test")
+    late = Match("late", "A", "B", now + timedelta(hours=2), "test")
     outside = Match("b", "A", "B", now + timedelta(hours=4), "test")
     assert inside_notification_window(inside, config, now)
+    assert inside_notification_window(late, config, now)
     assert not inside_notification_window(outside, config, now)
+
+
+def test_first_notification_catch_up_stops_when_lineup_window_starts():
+    config = load_config(_args())
+    kickoff = datetime(2026, 6, 11, 19, 0, tzinfo=UTC)
+    match = Match("catch-up", "A", "B", kickoff, "test")
+    assert due_notification_stages(match, config, kickoff - timedelta(hours=2)) == ["first"]
+    assert due_notification_stages(match, config, kickoff - timedelta(hours=1)) == [LINEUP_NOTIFICATION]
+    assert due_notification_stages(match, config, kickoff) == []
 
 
 def test_evening_notification_for_overnight_match():
@@ -95,9 +107,19 @@ def test_evening_notification_for_overnight_match_catches_late_runs():
 def test_lineup_notification_window():
     config = load_config(_args())
     match = Match("lineup", "A", "B", datetime(2026, 6, 11, 19, 0, tzinfo=UTC), "test")
-    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 15, tzinfo=UTC)) == [LINEUP_NOTIFICATION]
-    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 30, tzinfo=UTC)) == [LINEUP_NOTIFICATION]
-    assert due_notification_stages(match, config, datetime(2026, 6, 11, 17, 59, tzinfo=UTC)) == []
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 0, tzinfo=UTC)) == [
+        LINEUP_NOTIFICATION
+    ]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 15, tzinfo=UTC)) == [
+        LINEUP_NOTIFICATION
+    ]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 40, tzinfo=UTC)) == [
+        LINEUP_NOTIFICATION
+    ]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 18, 59, tzinfo=UTC)) == [
+        LINEUP_NOTIFICATION
+    ]
+    assert due_notification_stages(match, config, datetime(2026, 6, 11, 17, 59, tzinfo=UTC)) == ["first"]
 
 
 def test_late_evening_and_midnight_matches_get_first_and_lineup_alerts():
@@ -107,11 +129,11 @@ def test_late_evening_and_midnight_matches_get_first_and_lineup_alerts():
 
     assert due_notification_stages(late_evening, config, datetime(2026, 6, 11, 18, 0, tzinfo=UTC)) == ["first"]
     assert due_notification_stages(late_evening, config, datetime(2026, 6, 11, 20, 15, tzinfo=UTC)) == [
-        LINEUP_NOTIFICATION
+        LINEUP_NOTIFICATION,
     ]
     assert due_notification_stages(midnight, config, datetime(2026, 6, 11, 19, 0, tzinfo=UTC)) == ["first"]
     assert due_notification_stages(midnight, config, datetime(2026, 6, 11, 21, 15, tzinfo=UTC)) == [
-        LINEUP_NOTIFICATION
+        LINEUP_NOTIFICATION,
     ]
 
 
@@ -484,6 +506,32 @@ def test_real_run_saves_state_and_second_run_skips(tmp_path: Path, monkeypatch, 
     assert len(sent_messages) == 1
     assert load_notified(Path("data/sent_notifications.json")) == {"match-1"}
     assert "already notified" in capsys.readouterr().out
+
+
+def test_force_notifications_resends_even_when_state_exists(tmp_path: Path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    match = Match("match-1", "Mexico", "South Africa", datetime(2026, 6, 11, 19, 0, tzinfo=UTC))
+    monkeypatch.setattr("src.main.get_upcoming_matches", lambda config, now=None: [match])
+    monkeypatch.setattr("src.main.due_notification_stages", lambda match, config, now=None: ["first"])
+    monkeypatch.setattr("src.main.run_lineup_pipeline", lambda config, match: PipelineResult(False, error="none", source="test"))
+    monkeypatch.setattr("src.main.run_exact_score_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
+    monkeypatch.setattr("src.main.run_half_time_result_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
+    monkeypatch.setattr("src.main.run_goalscorer_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
+    sent_messages = []
+
+    def fake_send(config, message):
+        sent_messages.append(message)
+        return PipelineResult(True, data={"ok": True}, source="Telegram")
+
+    monkeypatch.setattr("src.main.send_telegram_message", fake_send)
+    save_notified_match("match-1", "first")
+    config = load_config(_args(force_notifications=True))
+
+    code = run(config, now=datetime(2026, 6, 11, 16, 0, tzinfo=UTC))
+
+    assert code == 0
+    assert len(sent_messages) == 1
+    assert "already notified" not in capsys.readouterr().out
 
 
 def test_manual_cli_match_id_execution(monkeypatch, capsys):

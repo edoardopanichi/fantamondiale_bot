@@ -35,7 +35,12 @@ jobs:
           LINEUP_API_KEY: ${{ secrets.LINEUP_API_KEY }}
           SPORTMONKS_API_TOKEN: ${{ secrets.SPORTMONKS_API_TOKEN }}
           TIMEZONE: Europe/Amsterdam
-        run: python -m src.main
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python -m src.main --lookahead-hours 8 --manual-override --force-notifications
+          else
+            python -m src.main
+          fi
       - name: Commit notification state
         run: |
           git config user.name "github-actions[bot]"

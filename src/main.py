@@ -56,7 +56,7 @@ def run(config: Config, now: datetime | None = None) -> int:
         stages_to_send = [
             stage
             for stage in stages
-            if config.dry_run or not already_notified(match.id, stage)
+            if config.dry_run or config.force_notifications or not already_notified(match.id, stage)
         ]
         if stages and not stages_to_send and not config.dry_run:
             skipped += 1

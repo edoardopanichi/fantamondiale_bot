@@ -1,6 +1,6 @@
 # Betting Match Notifier
 
-Python app that sends Telegram alerts about FIFA World Cup matches. For matches from noon through 00:59 Europe/Amsterdam, it sends a first alert roughly 3 hours before kickoff plus a second lineup alert roughly 60 to 30 minutes before kickoff. For overnight and early-morning matches from 01:00 through 11:59, it sends only one alert from 21:00 the evening before kickoff. It is designed for GitHub Actions. No server, VPS, Docker container, or always-on process is required.
+Python app that sends Telegram alerts about FIFA World Cup matches. For matches from noon through 00:59 Europe/Amsterdam, it sends a first alert from roughly 3 hours before kickoff until 1 hour before kickoff, plus a second lineup alert from 1 hour before kickoff until kickoff. For overnight and early-morning matches from 01:00 through 11:59, it sends only one alert from 21:00 the evening before kickoff. It is designed for GitHub Actions. No server, VPS, Docker container, or always-on process is required.
 
 Each alert includes match details, probable lineups and team modules/formations when available, the top 4 exact-score outcomes from odds, the top 3 half-time result outcomes from odds, and the top 4 anytime goalscorer outcomes from odds. Every data pipeline runs independently: if lineups fail, odds and Telegram still run; if exact-score odds fail, lineups/goalscorers/Telegram still run.
 
@@ -139,11 +139,11 @@ git push -u origin main
 - cron: "7 22 * * *"
 ```
 
-GitHub cron may start a few minutes late or skip scheduled runs under high load. The app therefore accepts a 2h45m to 3h15m window before noon-through-00:59 kickoffs by default, keeps overnight/early-morning first alerts eligible from 21:00 until kickoff if they have not already been sent, and accepts a 30m to 60m lineup-alert window by default for noon-through-00:59 kickoffs.
+GitHub cron may start a few minutes late or skip scheduled runs under high load. The app therefore accepts the first-alert stage from 3h15m before kickoff until 1h before kickoff for noon-through-00:59 matches, keeps overnight/early-morning first alerts eligible from 21:00 until kickoff if they have not already been sent, and accepts the lineup-alert stage from 1h before kickoff until kickoff for noon-through-00:59 matches. When the lineup alert is due, it takes precedence over a missed first alert because it contains the more complete match information.
 
 The workflow also uses a concurrency group, so two notification runs cannot overlap. This avoids a race where two jobs could both read the old notification state before either one commits the updated `data/sent_notifications.json` file.
 
-5. To run manually, open the GitHub repository, go to Actions, select "Notify World Cup Matches", click "Run workflow". This uses `workflow_dispatch`.
+5. To run manually, open the GitHub repository, go to Actions, select "Notify World Cup Matches", click "Run workflow". This uses `workflow_dispatch`. Manual workflow runs force a notification for every discovered match in the next 8 hours, even if the same match/stage was already sent before.
 6. Add secrets in Settings -> Secrets and variables -> Actions:
 
 ```text
@@ -194,6 +194,7 @@ CLI arguments:
 --match-id
 --send-test-telegram
 --manual-override
+--force-notifications
 --save-dry-run
 ```
 
@@ -223,7 +224,7 @@ Duplicate notification state problem: inspect or reset `data/sent_notifications.
 
 First alert disabled: set `ENABLE_FIRST_NOTIFICATION=false`. This leaves only the lineup alert enabled.
 
-Lineup alert disabled: set `ENABLE_LINEUP_NOTIFICATION=false`. This leaves only the first alert enabled.
+Lineup alert disabled: set `ENABLE_LINEUP_NOTIFICATION=false`. This leaves only the first alert stage enabled.
 
 ## Tests
 

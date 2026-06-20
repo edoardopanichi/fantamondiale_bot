@@ -54,6 +54,7 @@ class Config:
     match_id: str | None
     send_test_telegram: bool
     manual_override: bool
+    force_notifications: bool
     save_dry_run: bool
     odds_sport_key: str
     odds_regions: str
@@ -85,6 +86,7 @@ def load_config(args: object) -> Config:
         match_id=match_id,
         send_test_telegram=bool(getattr(args, "send_test_telegram", False)),
         manual_override=bool(match_id) or bool(getattr(args, "manual_override", False)),
+        force_notifications=bool(getattr(args, "force_notifications", False)),
         save_dry_run=bool(getattr(args, "save_dry_run", False)),
         odds_sport_key=_get_config_value("ODDS_SPORT_KEY", secrets, "soccer_fifa_world_cup") or "soccer_fifa_world_cup",
         odds_regions=_get_config_value("ODDS_REGIONS", secrets, "eu,uk") or "eu,uk",
