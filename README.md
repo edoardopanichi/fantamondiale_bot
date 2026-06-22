@@ -9,13 +9,14 @@ Each alert includes match details, probable lineups and team modules/formations 
 Research summary used for the implementation:
 
 - Fixtures: The Odds API events endpoint is preferred when `ODDS_API_KEY` is configured because it has stable documented sports/events endpoints. The app also includes a small FIFA 2026 opening-schedule fallback so local dry-run verification can detect the first matches without credentials. Reference: <https://the-odds-api.com/liveapi/guides/v4/>
-- Odds: The Odds API is preferred because it has official API access, bookmaker aggregation, event odds, and event market discovery. Correct-score, half-time result, and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS`, `HALF_TIME_RESULT_MARKETS`, and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>
+- Odds: The Odds API is preferred because it has official API access, bookmaker aggregation, event odds, and event market discovery. If `ODDS_API_SECONDARY_KEY` is configured, The Odds API is retried with that key when the primary key errors before exact-score odds fall back to API-Football. Correct-score, half-time result, and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS`, `HALF_TIME_RESULT_MARKETS`, and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>
 - Lineups: API-Football is tried first for official lineups via keyed API access. If it returns no lineup and `SPORTMONKS_API_TOKEN` is configured, Sportmonks is tried second, including the paid `expectedLineups` include when available. If API providers do not return a lineup, the app tries Goal.com Italian sitemap discovery for match-specific predicted lineup pages, then TalkSport's WordPress JSON search for match previews, then the local static team database in `data/static_team_lineups.json`, which contains all 48 national-team lineups from the Sky Sport formation guide. The Telegram message states which source was used. References: <https://www.api-football.com/documentation-v3>, <https://docs.sportmonks.com/v3/endpoints-and-entities/endpoints/premium-expected-lineups>
 
 Provider keys that are actually mandatory:
 
 - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are required for real sends.
 - `ODDS_API_KEY` is required for live exact-score/goalscorer odds.
+- `ODDS_API_SECONDARY_KEY` is optional and is used only if the primary Odds API key fails.
 - `LINEUP_API_KEY` enables API-Football lineup retrieval.
 - `SPORTMONKS_API_TOKEN` optionally enables Sportmonks as a second lineup provider.
 
@@ -57,6 +58,7 @@ For local runs, you can store API keys in `config/secrets.local.json`. This file
   "title": "Local API credentials for Betting Match Notifier",
   "description": "Ignored by Git. Used only for local runs and tests on this machine.",
   "ODDS_API_KEY": "...",
+  "ODDS_API_SECONDARY_KEY": "...",
   "LINEUP_API_KEY": "...",
   "SPORTMONKS_API_TOKEN": "..."
 }
@@ -150,11 +152,12 @@ The workflow also uses a concurrency group, so two notification runs cannot over
 TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID
 ODDS_API_KEY
+ODDS_API_SECONDARY_KEY
 LINEUP_API_KEY
 SPORTMONKS_API_TOKEN
 ```
 
-Only the Telegram secrets are required for real sending. Odds and lineup keys are optional but needed for complete data. `SPORTMONKS_API_TOKEN` is optional unless you want the second lineup provider. If a secret is missing, the corresponding pipeline fails gracefully and the message is still sent with the data that is available.
+Only the Telegram secrets are required for real sending. Odds and lineup keys are optional but needed for complete data. `ODDS_API_SECONDARY_KEY` is optional unless you want a backup The Odds API key; in GitHub, add it in the same Settings -> Secrets and variables -> Actions page, or in the `Notify World Cup Matches` Environment secrets if you keep this workflow environment-bound. `SPORTMONKS_API_TOKEN` is optional unless you want the second lineup provider. If a secret is missing, the corresponding pipeline fails gracefully and the message is still sent with the data that is available.
 
 7. Check workflow logs in the Actions tab. The logs show pipeline success/failure independently.
 8. Confirm `data/sent_notifications.json` changes after a successful real send. The workflow commits that file back to the repository.
@@ -168,6 +171,7 @@ Environment variables:
 TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID
 ODDS_API_KEY
+ODDS_API_SECONDARY_KEY
 LINEUP_API_KEY
 SPORTMONKS_API_TOKEN
 NOTIFICATION_TARGET_HOURS=3

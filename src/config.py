@@ -40,6 +40,7 @@ class Config:
     telegram_bot_token: str | None
     telegram_chat_id: str | None
     odds_api_key: str | None
+    odds_api_secondary_key: str | None
     lineup_api_key: str | None
     sportmonks_api_token: str | None
     notification_target_hours: float
@@ -72,6 +73,7 @@ def load_config(args: object) -> Config:
         telegram_bot_token=_get_config_value("TELEGRAM_BOT_TOKEN", secrets),
         telegram_chat_id=_get_config_value("TELEGRAM_CHAT_ID", secrets),
         odds_api_key=_get_config_value("ODDS_API_KEY", secrets),
+        odds_api_secondary_key=_get_config_value("ODDS_API_SECONDARY_KEY", secrets),
         lineup_api_key=_get_config_value("LINEUP_API_KEY", secrets),
         sportmonks_api_token=_get_config_value("SPORTMONKS_API_TOKEN", secrets),
         notification_target_hours=float(_get_config_value("NOTIFICATION_TARGET_HOURS", secrets, "3") or "3"),

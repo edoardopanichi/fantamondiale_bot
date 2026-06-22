@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from argparse import Namespace
 from datetime import UTC, datetime, timedelta
+from io import BytesIO
 import json
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import parse_qs
 
 import pytest
@@ -15,6 +17,7 @@ from src.lineup_provider import _normalize_team, _team_url_terms, run_lineup_pip
 from src.main import run
 from src.matches import LINEUP_NOTIFICATION, due_notification_stages, get_upcoming_matches, inside_notification_window
 from src.models import Match, PipelineResult, RankedOutcome, TeamLineup
+from src.odds import run_exact_score_pipeline, run_goalscorer_pipeline
 from src.probability import implied_probability
 from src.score_predictions import rank_exact_scores
 from src.storage import already_notified, load_notified, save_notified_match
@@ -68,6 +71,95 @@ def test_goalscorer_ranking_averages_sources():
     )
     assert ranked[0].name == "Player A"
     assert round(ranked[0].probability, 3) == 0.375
+
+
+def _quota_http_error() -> HTTPError:
+    return HTTPError(
+        url="https://example.test",
+        code=401,
+        msg="Unauthorized",
+        hdrs={},
+        fp=BytesIO(
+            b'{"message":"Usage quota has been reached. See usage plans at https://the-odds-api.com",'
+            b'"error_code":"OUT_OF_USAGE_CREDITS"}'
+        ),
+    )
+
+
+def test_exact_score_pipeline_falls_back_when_odds_api_quota_is_exhausted(monkeypatch):
+    monkeypatch.setenv("ODDS_API_KEY", "odds-key")
+    monkeypatch.setenv("LINEUP_API_KEY", "lineup-key")
+    monkeypatch.setattr("src.odds._fetch_available_markets", lambda config, match: (_ for _ in ()).throw(_quota_http_error()))
+    monkeypatch.setattr(
+        "src.odds._fetch_api_football_exact_score_outcomes",
+        lambda config, match: ([{"name": "1:0", "price": 5.0, "source": "API-Football"}], {"API-Football"}),
+    )
+    config = load_config(_args())
+    match = Match("event-1", "A", "B", datetime(2026, 6, 22, 21, 0, tzinfo=UTC))
+
+    result = run_exact_score_pipeline(config, match)
+
+    assert result.success
+    assert [item.name for item in result.data] == ["1-0"]
+    assert result.source == "API-Football"
+
+
+def test_exact_score_pipeline_uses_secondary_odds_key_before_api_football(monkeypatch):
+    monkeypatch.setenv("ODDS_API_KEY", "primary-key")
+    monkeypatch.setenv("ODDS_API_SECONDARY_KEY", "secondary-key")
+    monkeypatch.setenv("LINEUP_API_KEY", "lineup-key")
+    calls = []
+
+    def fake_available_markets(config, match):
+        calls.append(config.odds_api_key)
+        if config.odds_api_key == "primary-key":
+            raise _quota_http_error()
+        return {"correct_score"}
+
+    def fake_event_odds(config, match, markets):
+        assert config.odds_api_key == "secondary-key"
+        assert markets == ("correct_score",)
+        return {
+            "bookmakers": [
+                {
+                    "title": "Book A",
+                    "markets": [
+                        {
+                            "key": "correct_score",
+                            "outcomes": [{"name": "2-1", "price": 8.0}],
+                        }
+                    ],
+                }
+            ]
+        }
+
+    monkeypatch.setattr("src.odds._fetch_available_markets", fake_available_markets)
+    monkeypatch.setattr("src.odds._fetch_event_odds", fake_event_odds)
+    monkeypatch.setattr(
+        "src.odds._fetch_api_football_exact_score_outcomes",
+        lambda config, match: pytest.fail("API-Football should not be tried when the secondary Odds API key works"),
+    )
+    config = load_config(_args())
+    match = Match("event-1", "A", "B", datetime(2026, 6, 22, 21, 0, tzinfo=UTC))
+
+    result = run_exact_score_pipeline(config, match)
+
+    assert result.success
+    assert calls == ["primary-key", "secondary-key"]
+    assert [item.name for item in result.data] == ["2-1"]
+    assert result.source == "Book A"
+
+
+def test_odds_pipeline_reports_provider_error_body(monkeypatch):
+    monkeypatch.setenv("ODDS_API_KEY", "odds-key")
+    monkeypatch.setattr("src.odds._fetch_available_markets", lambda config, match: (_ for _ in ()).throw(_quota_http_error()))
+    config = load_config(_args())
+    match = Match("event-1", "A", "B", datetime(2026, 6, 22, 21, 0, tzinfo=UTC))
+
+    result = run_goalscorer_pipeline(config, match)
+
+    assert not result.success
+    assert "OUT_OF_USAGE_CREDITS" in result.error
 
 
 def test_notification_window_logic():
@@ -463,6 +555,36 @@ def test_lookahead_hours_detects_opening_match(monkeypatch):
     assert [match.id for match in matches] == ["fifa-2026-001-mexico-south-africa"]
 
 
+def test_match_discovery_uses_secondary_odds_key_when_primary_fails(monkeypatch):
+    monkeypatch.setenv("ODDS_API_KEY", "primary-key")
+    monkeypatch.setenv("ODDS_API_SECONDARY_KEY", "secondary-key")
+    calls = []
+
+    def fake_fetch_json(url, timeout=20):
+        calls.append(url)
+        if "primary-key" in url:
+            raise _quota_http_error()
+        return [
+            {
+                "id": "event-1",
+                "home_team": "A",
+                "away_team": "B",
+                "commence_time": "2026-06-22T21:00:00Z",
+            }
+        ]
+
+    monkeypatch.setattr("src.matches._fetch_json", fake_fetch_json)
+    config = load_config(_args(lookahead_hours=24))
+    now = datetime(2026, 6, 22, 12, 0, tzinfo=UTC)
+
+    matches = get_upcoming_matches(config, now)
+
+    assert [match.id for match in matches] == ["event-1"]
+    assert len(calls) == 2
+    assert "primary-key" in calls[0]
+    assert "secondary-key" in calls[1]
+
+
 def test_dry_run_does_not_save_notification_state(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("ODDS_API_KEY", raising=False)
@@ -559,6 +681,7 @@ def test_readme_deployment_instructions_presence():
         "TELEGRAM_BOT_TOKEN",
         "TELEGRAM_CHAT_ID",
         "ODDS_API_KEY",
+        "ODDS_API_SECONDARY_KEY",
         "python -m src.main --send-test-telegram",
         "No server",
     ]:

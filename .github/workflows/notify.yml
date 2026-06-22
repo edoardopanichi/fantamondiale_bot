@@ -32,6 +32,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ODDS_API_SECONDARY_KEY: ${{ secrets.ODDS_API_SECONDARY_KEY }}
           LINEUP_API_KEY: ${{ secrets.LINEUP_API_KEY }}
           SPORTMONKS_API_TOKEN: ${{ secrets.SPORTMONKS_API_TOKEN }}
           TIMEZONE: Europe/Amsterdam

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import UTC, datetime, time, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -64,8 +65,10 @@ def get_upcoming_matches(config: Config, now: datetime | None = None) -> list[Ma
     now = now or datetime.now(UTC)
     until = now + timedelta(hours=config.lookahead_hours)
     matches = []
-    if config.odds_api_key:
-        matches.extend(_get_odds_api_matches(config, now, until))
+    for odds_config in _odds_api_configs(config):
+        matches.extend(_get_odds_api_matches(odds_config, now, until))
+        if matches:
+            break
     if not matches:
         matches.extend(_get_static_matches(now, until))
     if config.match_id:
@@ -76,6 +79,15 @@ def get_upcoming_matches(config: Config, now: datetime | None = None) -> list[Ma
 
 def _get_static_matches(now: datetime, until: datetime) -> list[Match]:
     return [match for match in STATIC_WORLD_CUP_MATCHES if now <= match.kickoff_time_utc <= until]
+
+
+def _odds_api_configs(config: Config) -> tuple[Config, ...]:
+    if not config.odds_api_key:
+        return ()
+    configs = [config]
+    if config.odds_api_secondary_key and config.odds_api_secondary_key != config.odds_api_key:
+        configs.append(replace(config, odds_api_key=config.odds_api_secondary_key))
+    return tuple(configs)
 
 
 def _get_odds_api_matches(config: Config, now: datetime, until: datetime) -> list[Match]:

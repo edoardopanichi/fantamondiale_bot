@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -17,6 +18,53 @@ from .score_predictions import rank_exact_scores
 def _fetch_json(url: str, timeout: int = 20) -> object:
     with urlopen(url, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _api_error_message(exc: Exception) -> str:
+    if not isinstance(exc, HTTPError):
+        return str(exc)
+    try:
+        payload = json.loads(exc.read().decode("utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return str(exc)
+    if not isinstance(payload, dict):
+        return str(exc)
+    error_code = payload.get("error_code")
+    message = payload.get("message") or payload.get("error")
+    if error_code and message:
+        return f"{exc} ({error_code}: {message})"
+    if message:
+        return f"{exc} ({message})"
+    return str(exc)
+
+
+def _odds_api_configs(config: Config) -> tuple[Config, ...]:
+    if not config.odds_api_key:
+        return ()
+    configs = [config]
+    if config.odds_api_secondary_key and config.odds_api_secondary_key != config.odds_api_key:
+        configs.append(replace(config, odds_api_key=config.odds_api_secondary_key))
+    return tuple(configs)
+
+
+def _fetch_odds_api_outcomes(
+    config: Config,
+    match: Match,
+    market_keys: tuple[str, ...],
+) -> tuple[list[dict], set[str], str | None, bool]:
+    provider_error = None
+    for odds_config in _odds_api_configs(config):
+        try:
+            available = _fetch_available_markets(odds_config, match)
+            markets = tuple(key for key in market_keys if key in available)
+            if not markets:
+                return [], set(), provider_error, False
+            payload = _fetch_event_odds(odds_config, match, markets)
+            outcomes, sources = _collect_market_outcomes(payload, markets)
+            return outcomes, sources, None, True
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+            provider_error = _api_error_message(exc)
+    return [], set(), provider_error, True
 
 
 def _collect_market_outcomes(payload: object, market_keys: tuple[str, ...]) -> tuple[list[dict], set[str]]:
@@ -123,54 +171,72 @@ def run_exact_score_pipeline(config: Config, match: Match) -> PipelineResult:
     if not config.odds_api_key:
         return PipelineResult(False, data=[], error="ODDS_API_KEY is not configured", source="The Odds API")
     try:
-        available = _fetch_available_markets(config, match)
-        markets = tuple(key for key in config.exact_score_markets if key in available)
-        if markets:
-            payload = _fetch_event_odds(config, match, markets)
-            outcomes, sources = _collect_market_outcomes(payload, markets)
+        outcomes, sources, odds_error, tried_odds_api_markets = _fetch_odds_api_outcomes(
+            config,
+            match,
+            config.exact_score_markets,
+        )
+        if outcomes:
             source_name = ", ".join(sorted(sources)) or "The Odds API"
         else:
             outcomes, sources = _fetch_api_football_exact_score_outcomes(config, match)
             source_name = ", ".join(sorted(sources)) or "API-Football"
         ranked = rank_exact_scores(outcomes)
         if not ranked:
-            return PipelineResult(False, data=[], error="No exact score odds available", source="The Odds API")
+            return PipelineResult(
+                False,
+                data=[],
+                error=odds_error if tried_odds_api_markets and odds_error else "No exact score odds available",
+                source="The Odds API",
+            )
         return PipelineResult(True, data=ranked, source=source_name)
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
-        return PipelineResult(False, data=[], error=str(exc), source="The Odds API")
+        return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
 
 
 def run_goalscorer_pipeline(config: Config, match: Match) -> PipelineResult:
     if not config.odds_api_key:
         return PipelineResult(False, data=[], error="ODDS_API_KEY is not configured", source="The Odds API")
     try:
-        available = _fetch_available_markets(config, match)
-        markets = tuple(key for key in config.goalscorer_markets if key in available)
-        if not markets:
+        outcomes, sources, odds_error, tried_odds_api_markets = _fetch_odds_api_outcomes(
+            config,
+            match,
+            config.goalscorer_markets,
+        )
+        if not tried_odds_api_markets:
             return PipelineResult(False, data=[], error="No goalscorer market available for this event", source="The Odds API")
-        payload = _fetch_event_odds(config, match, markets)
-        outcomes, sources = _collect_market_outcomes(payload, markets)
         ranked = rank_goalscorers(outcomes)
         if not ranked:
-            return PipelineResult(False, data=[], error="No goalscorer odds available", source="The Odds API")
+            return PipelineResult(
+                False,
+                data=[],
+                error=odds_error or "No goalscorer odds available",
+                source="The Odds API",
+            )
         return PipelineResult(True, data=ranked, source=", ".join(sorted(sources)) or "The Odds API")
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
-        return PipelineResult(False, data=[], error=str(exc), source="The Odds API")
+        return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
 
 
 def run_half_time_result_pipeline(config: Config, match: Match) -> PipelineResult:
     if not config.odds_api_key:
         return PipelineResult(False, data=[], error="ODDS_API_KEY is not configured", source="The Odds API")
     try:
-        available = _fetch_available_markets(config, match)
-        markets = tuple(key for key in config.half_time_result_markets if key in available)
-        if not markets:
+        outcomes, sources, odds_error, tried_odds_api_markets = _fetch_odds_api_outcomes(
+            config,
+            match,
+            config.half_time_result_markets,
+        )
+        if not tried_odds_api_markets:
             return PipelineResult(False, data=[], error="No half-time result market available for this event", source="The Odds API")
-        payload = _fetch_event_odds(config, match, markets)
-        outcomes, sources = _collect_market_outcomes(payload, markets)
         ranked = _rank_named_outcomes(outcomes, limit=3)
         if not ranked:
-            return PipelineResult(False, data=[], error="No half-time result odds available", source="The Odds API")
+            return PipelineResult(
+                False,
+                data=[],
+                error=odds_error or "No half-time result odds available",
+                source="The Odds API",
+            )
         return PipelineResult(True, data=ranked, source=", ".join(sorted(sources)) or "The Odds API")
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
-        return PipelineResult(False, data=[], error=str(exc), source="The Odds API")
+        return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
