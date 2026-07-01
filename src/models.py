@@ -20,6 +20,7 @@ class PipelineResult:
     data: Any = None
     error: str | None = None
     source: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

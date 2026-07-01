@@ -182,15 +182,21 @@ def run_exact_score_pipeline(config: Config, match: Match) -> PipelineResult:
         else:
             outcomes, sources = _fetch_api_football_exact_score_outcomes(config, match)
             source_name = ", ".join(sorted(sources)) or "API-Football"
-        ranked = rank_exact_scores(outcomes)
-        if not ranked:
+        ranked_for_display = rank_exact_scores(outcomes)
+        ranked_for_clean_sheets = rank_exact_scores(outcomes, limit=10)
+        if not ranked_for_display:
             return PipelineResult(
                 False,
                 data=[],
                 error=odds_error if tried_odds_api_markets and odds_error else "No exact score odds available",
                 source="The Odds API",
             )
-        return PipelineResult(True, data=ranked, source=source_name)
+        return PipelineResult(
+            True,
+            data=ranked_for_display,
+            source=source_name,
+            metadata={"clean_sheet_exact_scores": ranked_for_clean_sheets},
+        )
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
         return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
 
@@ -236,10 +242,15 @@ def run_goalscorer_pipeline(
 
 
 def _ranked_exact_scores_as_outcomes(result: PipelineResult) -> list[dict]:
-    if not result.success or not isinstance(result.data, list):
+    if not result.success:
+        return []
+    scores = result.data
+    if isinstance(result.metadata, dict) and isinstance(result.metadata.get("clean_sheet_exact_scores"), list):
+        scores = result.metadata["clean_sheet_exact_scores"]
+    if not isinstance(scores, list):
         return []
     outcomes = []
-    for item in result.data:
+    for item in scores:
         if not isinstance(item, RankedOutcome) or item.probability <= 0:
             continue
         outcomes.append(

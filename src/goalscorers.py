@@ -178,7 +178,7 @@ def _clean_sheet_probabilities_from_exact_scores(
         return {}
     home_team = canonical_team(match.home_team)
     away_team = canonical_team(match.away_team)
-    source_totals: dict[str, dict[str, float]] = {}
+    source_scores: dict[str, list[tuple[float, int, int]]] = {}
     for outcome in outcomes:
         if str(outcome.get("market_key") or "") not in exact_score_markets:
             continue
@@ -188,12 +188,18 @@ def _clean_sheet_probabilities_from_exact_scores(
         home_goals, away_goals = score
         source = str(outcome.get("source", "Unknown"))
         probability = implied_probability(float(outcome["price"]))
-        if away_goals == 0:
-            source_totals.setdefault(source, {}).setdefault(home_team, 0.0)
-            source_totals[source][home_team] += probability
-        if home_goals == 0:
-            source_totals.setdefault(source, {}).setdefault(away_team, 0.0)
-            source_totals[source][away_team] += probability
+        source_scores.setdefault(source, []).append((probability, home_goals, away_goals))
+
+    source_totals: dict[str, dict[str, float]] = {}
+    for source, scores in source_scores.items():
+        top_scores = sorted(scores, key=lambda item: item[0], reverse=True)[:10]
+        for probability, home_goals, away_goals in top_scores:
+            if away_goals == 0:
+                source_totals.setdefault(source, {}).setdefault(home_team, 0.0)
+                source_totals[source][home_team] += probability
+            if home_goals == 0:
+                source_totals.setdefault(source, {}).setdefault(away_team, 0.0)
+                source_totals[source][away_team] += probability
     result: dict[str, float] = {}
     for team in (home_team, away_team):
         values = [totals[team] for totals in source_totals.values() if team in totals]
@@ -302,12 +308,14 @@ def _appearance_multiplier(name: str, lineup_confidence: tuple[set[str], set[str
     starters, substitutes, is_official, is_complete = lineup_confidence
     keys = _player_keys(name)
     if keys & starters:
-        return 1.0 if is_official else 0.9
+        return 1.0 if is_official else 0.95
     if keys & substitutes:
-        return 0.35 if is_official else 0.55
+        return 0.35 if is_official else 0.40
     if is_official and is_complete:
         return 0.03
-    return 0.65
+    if is_official:
+        return 0.65
+    return 0.40
 
 
 def _player_keys(name: str) -> set[str]:

@@ -115,7 +115,7 @@ def test_goalscorer_ranking_keeps_unknown_players_viable_for_partial_official_li
     assert round(ranked[0].probability, 3) == 0.163
 
 
-def test_goalscorer_ranking_only_softly_discounts_predicted_non_starters():
+def test_goalscorer_ranking_discounts_predicted_non_starters():
     ranked = rank_goalscorers(
         [
             {"description": "Elite Bench Forward", "name": "Yes", "price": 2.0, "source": "Book A"},
@@ -129,8 +129,8 @@ def test_goalscorer_ranking_only_softly_discounts_predicted_non_starters():
     )
 
     assert [item.name for item in ranked] == ["Elite Bench Forward", "Starting Defender"]
-    assert round(ranked[0].probability, 3) == 0.325
-    assert round(ranked[1].probability, 3) == 0.023
+    assert round(ranked[0].probability, 3) == 0.2
+    assert round(ranked[1].probability, 3) == 0.024
 
 
 def test_fantamondiale_ranking_uses_bonus_expected_points_and_clean_sheets():
@@ -158,8 +158,39 @@ def test_fantamondiale_ranking_uses_bonus_expected_points_and_clean_sheets():
     assert [item.name for item in ranked[:3]] == ["Freese", "Pulisic", "Tabakovic"]
     assert ranked[0].team == "Stati Uniti"
     assert round(ranked[0].expected_points, 3) == 1.625
-    assert round(ranked[1].expected_points, 3) == 1.2
+    assert round(ranked[1].expected_points, 3) == 1.267
     assert "Bosnia-Erzegovina" in {item.team for item in ranked}
+
+
+def test_clean_sheet_inference_uses_only_top_10_exact_scores():
+    ranked = rank_goalscorers(
+        [
+            {"name": "1-0", "price": 5.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "1-1", "price": 6.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "2-1", "price": 7.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "2-2", "price": 8.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "3-1", "price": 9.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "3-2", "price": 10.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "4-1", "price": 11.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "4-2", "price": 12.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "5-1", "price": 13.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "5-2", "price": 14.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "0-1", "price": 100.0, "source": "Book A", "market_key": "correct_score"},
+        ],
+        match=Match("usa-bih", "United States", "Bosnia & Herzegovina", datetime(2026, 7, 1, 21, 0, tzinfo=UTC)),
+        lineup_result=PipelineResult(
+            True,
+            data={
+                "United States": TeamLineup(["Freese"]),
+                "Bosnia & Herzegovina": TeamLineup(["Vasilj"]),
+            },
+            source="Local static team database",
+        ),
+        exact_score_markets={"correct_score"},
+    )
+
+    assert [item.name for item in ranked] == ["Freese"]
+    assert round(ranked[0].expected_points, 3) == 1.0
 
 
 def _quota_http_error() -> HTTPError:
