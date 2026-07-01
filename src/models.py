@@ -34,3 +34,14 @@ class RankedOutcome:
     name: str
     probability: float
     sources: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class FantamondialePick:
+    name: str
+    team: str
+    role: str
+    bonus: int
+    probability: float
+    expected_points: float
+    sources: tuple[str, ...] = ()

@@ -61,6 +61,7 @@ class Config:
     odds_regions: str
     exact_score_markets: tuple[str, ...]
     goalscorer_markets: tuple[str, ...]
+    clean_sheet_markets: tuple[str, ...]
     half_time_result_markets: tuple[str, ...]
 
 
@@ -104,6 +105,11 @@ def load_config(args: object) -> Config:
                 secrets,
                 "player_goal_scorer_anytime,anytime_goalscorer,goalscorer_anytime",
             ) or "").split(",")
+            if item.strip()
+        ),
+        clean_sheet_markets=tuple(
+            item.strip()
+            for item in (_get_config_value("CLEAN_SHEET_MARKETS", secrets, "clean_sheet,team_clean_sheet") or "").split(",")
             if item.strip()
         ),
         half_time_result_markets=tuple(

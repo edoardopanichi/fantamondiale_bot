@@ -84,6 +84,7 @@ def _collect_market_outcomes(payload: object, market_keys: tuple[str, ...]) -> t
                     if "price" in outcome:
                         item = dict(outcome)
                         item["source"] = title
+                        item["market_key"] = market.get("key")
                         outcomes.append(item)
     return outcomes, sources
 
@@ -194,18 +195,34 @@ def run_exact_score_pipeline(config: Config, match: Match) -> PipelineResult:
         return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
 
 
-def run_goalscorer_pipeline(config: Config, match: Match, lineup_result: PipelineResult | None = None) -> PipelineResult:
+def run_goalscorer_pipeline(
+    config: Config,
+    match: Match,
+    lineup_result: PipelineResult | None = None,
+    exact_score_result: PipelineResult | None = None,
+) -> PipelineResult:
     if not config.odds_api_key:
         return PipelineResult(False, data=[], error="ODDS_API_KEY is not configured", source="The Odds API")
     try:
         outcomes, sources, odds_error, tried_odds_api_markets = _fetch_odds_api_outcomes(
             config,
             match,
-            config.goalscorer_markets,
+            config.goalscorer_markets + config.clean_sheet_markets + config.exact_score_markets,
         )
         if not tried_odds_api_markets:
             return PipelineResult(False, data=[], error="No goalscorer market available for this event", source="The Odds API")
-        ranked = rank_goalscorers(outcomes, lineup_result=lineup_result)
+        if exact_score_result and not any(
+            str(outcome.get("market_key") or "") in config.exact_score_markets for outcome in outcomes
+        ):
+            outcomes.extend(_ranked_exact_scores_as_outcomes(exact_score_result))
+        ranked = rank_goalscorers(
+            outcomes,
+            lineup_result=lineup_result,
+            match=match,
+            goalscorer_markets=set(config.goalscorer_markets),
+            clean_sheet_markets=set(config.clean_sheet_markets),
+            exact_score_markets={*config.exact_score_markets, "ranked_exact_score"},
+        )
         if not ranked:
             return PipelineResult(
                 False,
@@ -216,6 +233,24 @@ def run_goalscorer_pipeline(config: Config, match: Match, lineup_result: Pipelin
         return PipelineResult(True, data=ranked, source=", ".join(sorted(sources)) or "The Odds API")
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
         return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
+
+
+def _ranked_exact_scores_as_outcomes(result: PipelineResult) -> list[dict]:
+    if not result.success or not isinstance(result.data, list):
+        return []
+    outcomes = []
+    for item in result.data:
+        if not isinstance(item, RankedOutcome) or item.probability <= 0:
+            continue
+        outcomes.append(
+            {
+                "name": item.name,
+                "price": 1 / item.probability,
+                "source": result.source or "Exact-score pipeline",
+                "market_key": "ranked_exact_score",
+            }
+        )
+    return outcomes
 
 
 def run_half_time_result_pipeline(config: Config, match: Match) -> PipelineResult:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from html import escape
 from zoneinfo import ZoneInfo
 
-from .models import Match, PipelineResult, RankedOutcome, TeamLineup
+from .models import FantamondialePick, Match, PipelineResult, RankedOutcome, TeamLineup
 
 
 def _format_probability(value: float) -> str:
@@ -19,6 +19,18 @@ def _format_ranked(items: list[RankedOutcome], unavailable: str) -> str:
         return f"<i>{_html(unavailable)}</i>"
     return "\n".join(
         f"{index}. <b>{_html(item.name)}</b> <i>{_format_probability(item.probability)}</i>"
+        for index, item in enumerate(items, start=1)
+    )
+
+
+def _format_expected_picks(items: list[FantamondialePick], unavailable: str) -> str:
+    if not items:
+        return f"<i>{_html(unavailable)}</i>"
+    return "\n".join(
+        (
+            f"{index}. <b>{_html(item.name)}</b> ({_html(item.team)}) "
+            f"<i>{item.expected_points:.2f} expected pts ({_format_probability(item.probability)} - {item.bonus}pts)</i>"
+        )
         for index, item in enumerate(items, start=1)
     )
 
@@ -86,8 +98,8 @@ def format_message(
             "",
             _format_ranked(half_time_results, "Half-time result odds unavailable"),
             "",
-            "🥅 <b>Most Likely Goalscorers</b>",
+            "🥅 <b>Best Fantamondiale Picks</b>",
             "",
-            _format_ranked(goalscorers, "Goalscorer odds unavailable"),
+            _format_expected_picks(goalscorers, "Fantamondiale pick odds unavailable"),
         ]
     )

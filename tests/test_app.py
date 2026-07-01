@@ -16,7 +16,7 @@ from src.goalscorers import rank_goalscorers
 from src.lineup_provider import _normalize_team, _team_url_terms, run_lineup_pipeline
 from src.main import run
 from src.matches import LINEUP_NOTIFICATION, due_notification_stages, get_upcoming_matches, inside_notification_window
-from src.models import Match, PipelineResult, RankedOutcome, TeamLineup
+from src.models import FantamondialePick, Match, PipelineResult, RankedOutcome, TeamLineup
 from src.odds import run_exact_score_pipeline, run_goalscorer_pipeline
 from src.probability import implied_probability
 from src.score_predictions import rank_exact_scores
@@ -131,6 +131,35 @@ def test_goalscorer_ranking_only_softly_discounts_predicted_non_starters():
     assert [item.name for item in ranked] == ["Elite Bench Forward", "Starting Defender"]
     assert round(ranked[0].probability, 3) == 0.325
     assert round(ranked[1].probability, 3) == 0.023
+
+
+def test_fantamondiale_ranking_uses_bonus_expected_points_and_clean_sheets():
+    ranked = rank_goalscorers(
+        [
+            {"description": "Pulisic", "name": "Yes", "price": 3.0, "source": "Book A", "market_key": "goalscorer"},
+            {"description": "Tabakovic", "name": "Yes", "price": 8.0, "source": "Book A", "market_key": "goalscorer"},
+            {"name": "1-0", "price": 5.0, "source": "Book A", "market_key": "correct_score"},
+            {"name": "2-0", "price": 8.0, "source": "Book A", "market_key": "correct_score"},
+        ],
+        match=Match("usa-bih", "United States", "Bosnia & Herzegovina", datetime(2026, 7, 1, 21, 0, tzinfo=UTC)),
+        lineup_result=PipelineResult(
+            True,
+            data={
+                "United States": TeamLineup(["Freese", "Freeman", "Richards", "Pulisic"]),
+                "Bosnia & Herzegovina": TeamLineup(["Vasilj", "Dzeko", "Tabakovic"]),
+            },
+            source="Local static team database",
+        ),
+        goalscorer_markets={"goalscorer"},
+        exact_score_markets={"correct_score"},
+    )
+
+    assert isinstance(ranked[0], FantamondialePick)
+    assert [item.name for item in ranked[:3]] == ["Freese", "Pulisic", "Tabakovic"]
+    assert ranked[0].team == "Stati Uniti"
+    assert round(ranked[0].expected_points, 3) == 1.625
+    assert round(ranked[1].expected_points, 3) == 1.2
+    assert "Bosnia-Erzegovina" in {item.team for item in ranked}
 
 
 def _quota_http_error() -> HTTPError:
@@ -324,7 +353,7 @@ def test_formatter_handles_unavailable_pipelines():
     assert "Probable lineup unavailable" in message
     assert "1. <b>1-0</b> <i>20.0%</i>" in message
     assert "Half-time result odds unavailable" in message
-    assert "Goalscorer odds unavailable" in message
+    assert "Fantamondiale pick odds unavailable" in message
 
 
 def test_formatter_includes_team_modules():
@@ -340,7 +369,21 @@ def test_formatter_includes_team_modules():
             source="API-Football",
         ),
         PipelineResult(False, data=[]),
-        PipelineResult(False, data=[]),
+        PipelineResult(
+            True,
+            data=[
+                FantamondialePick(
+                    name="Zendejas",
+                    team="Stati Uniti",
+                    role="C",
+                    bonus=9,
+                    probability=0.226,
+                    expected_points=2.034,
+                    sources=("Book A",),
+                )
+            ],
+            source="Book A",
+        ),
         "Europe/Amsterdam",
         half_time_result=PipelineResult(True, data=[RankedOutcome("Draw", 0.45, ("Book A",))], source="Book A"),
     )
@@ -349,6 +392,7 @@ def test_formatter_includes_team_modules():
     assert "Lineup source: API-Football" in message
     assert "Most Likely Half-Time Results" in message
     assert "1. <b>Draw</b> <i>45.0%</i>" in message
+    assert "1. <b>Zendejas</b> (Stati Uniti) <i>2.03 expected pts (22.6% - 9pts)</i>" in message
 
 
 def test_formatter_includes_unavailable_lineup_source():
@@ -672,7 +716,9 @@ def test_real_run_saves_state_and_second_run_skips(tmp_path: Path, monkeypatch, 
     monkeypatch.setattr("src.main.run_half_time_result_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
     monkeypatch.setattr(
         "src.main.run_goalscorer_pipeline",
-        lambda config, match, lineup_result=None: PipelineResult(False, data=[], error="none", source="test"),
+        lambda config, match, lineup_result=None, exact_score_result=None: PipelineResult(
+            False, data=[], error="none", source="test"
+        ),
     )
     sent_messages = []
 
@@ -703,7 +749,9 @@ def test_force_notifications_resends_even_when_state_exists(tmp_path: Path, monk
     monkeypatch.setattr("src.main.run_half_time_result_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
     monkeypatch.setattr(
         "src.main.run_goalscorer_pipeline",
-        lambda config, match, lineup_result=None: PipelineResult(False, data=[], error="none", source="test"),
+        lambda config, match, lineup_result=None, exact_score_result=None: PipelineResult(
+            False, data=[], error="none", source="test"
+        ),
     )
     sent_messages = []
 
