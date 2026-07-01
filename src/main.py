@@ -83,7 +83,7 @@ def run(config: Config, now: datetime | None = None) -> int:
         if half_time_result.error:
             log(f"Half-time result error: {half_time_result.error}")
 
-        goalscorer_result = run_goalscorer_pipeline(config, match)
+        goalscorer_result = run_goalscorer_pipeline(config, match, lineup_result=lineup_result)
         log(f"Goalscorer pipeline result: {'success' if goalscorer_result.success else 'failed'}")
         if goalscorer_result.error:
             log(f"Goalscorer error: {goalscorer_result.error}")

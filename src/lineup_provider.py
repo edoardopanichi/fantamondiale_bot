@@ -75,12 +75,13 @@ def run_lineup_pipeline(config: Config, match: Match) -> PipelineResult:
 
     if config.sportmonks_api_token:
         try:
-            lineup = _fetch_sportmonks_lineups(config, match)
+            sportmonks_result = _fetch_sportmonks_lineups(config, match)
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
-            lineup = None
+            sportmonks_result = None
             errors.append(f"Sportmonks: {exc}")
-        if lineup:
-            return PipelineResult(True, data=lineup, source="Sportmonks")
+        if sportmonks_result:
+            lineup, source = sportmonks_result
+            return PipelineResult(True, data=lineup, source=source)
         errors.append("Sportmonks: Probable lineup unavailable")
 
     try:
@@ -135,20 +136,29 @@ def _fetch_api_football_lineups(config: Config, match: Match) -> dict[str, TeamL
             for player in item.get("startXI", [])
             if player.get("player", {}).get("name")
         ]
+        substitutes = [
+            player.get("player", {}).get("name")
+            for player in item.get("substitutes", [])
+            if player.get("player", {}).get("name")
+        ]
         if team_name and players:
             teams[str(team_name)] = TeamLineup(
                 players=[str(player) for player in players],
                 formation=str(formation) if formation else None,
+                substitutes=[str(player) for player in substitutes],
             )
     return teams or None
 
 
-def _fetch_sportmonks_lineups(config: Config, match: Match) -> dict[str, TeamLineup] | None:
+def _fetch_sportmonks_lineups(config: Config, match: Match) -> tuple[dict[str, TeamLineup], str] | None:
     official = _fetch_sportmonks_lineups_with_include(config, match, "participants;lineups.player")
     if official:
-        return official
+        return official, "Sportmonks official lineups"
     try:
-        return _fetch_sportmonks_lineups_with_include(config, match, "participants;expectedLineups.player")
+        expected = _fetch_sportmonks_lineups_with_include(config, match, "participants;expectedLineups.player")
+        if expected:
+            return expected, "Sportmonks expected lineups"
+        return None
     except HTTPError as exc:
         if exc.code == 403:
             return None

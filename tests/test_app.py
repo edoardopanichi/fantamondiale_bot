@@ -73,6 +73,66 @@ def test_goalscorer_ranking_averages_sources():
     assert round(ranked[0].probability, 3) == 0.375
 
 
+def test_goalscorer_ranking_discounts_official_substitutes():
+    ranked = rank_goalscorers(
+        [
+            {"description": "Bench Striker", "name": "Yes", "price": 3.0, "source": "Book A"},
+            {"description": "Starting Forward", "name": "Yes", "price": 5.0, "source": "Book A"},
+            {"description": "Absent Star", "name": "Yes", "price": 2.0, "source": "Book A"},
+        ],
+        lineup_result=PipelineResult(
+            True,
+            data={
+                "England": TeamLineup(
+                    ["Starting Forward"],
+                    substitutes=["Bench Striker"],
+                ),
+                "Opponent": TeamLineup(["Opponent Starter"]),
+            },
+            source="API-Football",
+        ),
+    )
+
+    assert [item.name for item in ranked] == ["Starting Forward", "Bench Striker", "Absent Star"]
+    assert round(ranked[0].probability, 3) == 0.2
+    assert round(ranked[1].probability, 3) == 0.117
+
+
+def test_goalscorer_ranking_keeps_unknown_players_viable_for_partial_official_lineups():
+    ranked = rank_goalscorers(
+        [
+            {"description": "Known Substitute", "name": "Yes", "price": 3.0, "source": "Book A"},
+            {"description": "Unknown Opponent", "name": "Yes", "price": 4.0, "source": "Book A"},
+        ],
+        lineup_result=PipelineResult(
+            True,
+            data={"England": TeamLineup(["Known Starter"], substitutes=["Known Substitute"])},
+            source="API-Football",
+        ),
+    )
+
+    assert [item.name for item in ranked] == ["Unknown Opponent", "Known Substitute"]
+    assert round(ranked[0].probability, 3) == 0.163
+
+
+def test_goalscorer_ranking_only_softly_discounts_predicted_non_starters():
+    ranked = rank_goalscorers(
+        [
+            {"description": "Elite Bench Forward", "name": "Yes", "price": 2.0, "source": "Book A"},
+            {"description": "Starting Defender", "name": "Yes", "price": 40.0, "source": "Book A"},
+        ],
+        lineup_result=PipelineResult(
+            True,
+            data={"Argentina": TeamLineup(["Starting Defender"])},
+            source="Local static team database",
+        ),
+    )
+
+    assert [item.name for item in ranked] == ["Elite Bench Forward", "Starting Defender"]
+    assert round(ranked[0].probability, 3) == 0.325
+    assert round(ranked[1].probability, 3) == 0.023
+
+
 def _quota_http_error() -> HTTPError:
     return HTTPError(
         url="https://example.test",
@@ -610,7 +670,10 @@ def test_real_run_saves_state_and_second_run_skips(tmp_path: Path, monkeypatch, 
     monkeypatch.setattr("src.main.run_lineup_pipeline", lambda config, match: PipelineResult(False, error="none", source="test"))
     monkeypatch.setattr("src.main.run_exact_score_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
     monkeypatch.setattr("src.main.run_half_time_result_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
-    monkeypatch.setattr("src.main.run_goalscorer_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
+    monkeypatch.setattr(
+        "src.main.run_goalscorer_pipeline",
+        lambda config, match, lineup_result=None: PipelineResult(False, data=[], error="none", source="test"),
+    )
     sent_messages = []
 
     def fake_send(config, message):
@@ -638,7 +701,10 @@ def test_force_notifications_resends_even_when_state_exists(tmp_path: Path, monk
     monkeypatch.setattr("src.main.run_lineup_pipeline", lambda config, match: PipelineResult(False, error="none", source="test"))
     monkeypatch.setattr("src.main.run_exact_score_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
     monkeypatch.setattr("src.main.run_half_time_result_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
-    monkeypatch.setattr("src.main.run_goalscorer_pipeline", lambda config, match: PipelineResult(False, data=[], error="none", source="test"))
+    monkeypatch.setattr(
+        "src.main.run_goalscorer_pipeline",
+        lambda config, match, lineup_result=None: PipelineResult(False, data=[], error="none", source="test"),
+    )
     sent_messages = []
 
     def fake_send(config, message):

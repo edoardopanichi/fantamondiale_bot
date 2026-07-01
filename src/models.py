@@ -26,6 +26,7 @@ class PipelineResult:
 class TeamLineup:
     players: list[str]
     formation: str | None = None
+    substitutes: list[str] | None = None
 
 
 @dataclass(frozen=True)

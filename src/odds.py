@@ -194,7 +194,7 @@ def run_exact_score_pipeline(config: Config, match: Match) -> PipelineResult:
         return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
 
 
-def run_goalscorer_pipeline(config: Config, match: Match) -> PipelineResult:
+def run_goalscorer_pipeline(config: Config, match: Match, lineup_result: PipelineResult | None = None) -> PipelineResult:
     if not config.odds_api_key:
         return PipelineResult(False, data=[], error="ODDS_API_KEY is not configured", source="The Odds API")
     try:
@@ -205,7 +205,7 @@ def run_goalscorer_pipeline(config: Config, match: Match) -> PipelineResult:
         )
         if not tried_odds_api_markets:
             return PipelineResult(False, data=[], error="No goalscorer market available for this event", source="The Odds API")
-        ranked = rank_goalscorers(outcomes)
+        ranked = rank_goalscorers(outcomes, lineup_result=lineup_result)
         if not ranked:
             return PipelineResult(
                 False,
