@@ -224,7 +224,24 @@ def test_exact_score_pipeline_falls_back_when_odds_api_quota_is_exhausted(monkey
     assert result.source == "API-Football"
 
 
-def test_exact_score_pipeline_uses_secondary_odds_key_before_api_football(monkeypatch):
+def test_exact_score_pipeline_uses_api_football_without_odds_api_key(monkeypatch):
+    monkeypatch.delenv("ODDS_API_KEY", raising=False)
+    monkeypatch.setenv("LINEUP_API_KEY", "lineup-key")
+    monkeypatch.setattr(
+        "src.odds._fetch_api_football_exact_score_outcomes",
+        lambda config, match: ([{"name": "2:0", "price": 6.0, "source": "API-Football"}], {"API-Football"}),
+    )
+    config = load_config(_args())
+    match = Match("event-1", "Argentina", "Egypt", datetime(2026, 7, 7, 16, 0, tzinfo=UTC))
+
+    result = run_exact_score_pipeline(config, match)
+
+    assert result.success
+    assert [item.name for item in result.data] == ["2-0"]
+    assert result.source == "API-Football"
+
+
+def test_exact_score_pipeline_uses_secondary_odds_key_and_api_football(monkeypatch):
     monkeypatch.setenv("ODDS_API_KEY", "primary-key")
     monkeypatch.setenv("ODDS_API_SECONDARY_KEY", "secondary-key")
     monkeypatch.setenv("LINEUP_API_KEY", "lineup-key")
@@ -257,7 +274,7 @@ def test_exact_score_pipeline_uses_secondary_odds_key_before_api_football(monkey
     monkeypatch.setattr("src.odds._fetch_event_odds", fake_event_odds)
     monkeypatch.setattr(
         "src.odds._fetch_api_football_exact_score_outcomes",
-        lambda config, match: pytest.fail("API-Football should not be tried when the secondary Odds API key works"),
+        lambda config, match: ([{"name": "2:1", "price": 4.0, "source": "API-Football"}], {"API-Football"}),
     )
     config = load_config(_args())
     match = Match("event-1", "A", "B", datetime(2026, 6, 22, 21, 0, tzinfo=UTC))
@@ -267,7 +284,8 @@ def test_exact_score_pipeline_uses_secondary_odds_key_before_api_football(monkey
     assert result.success
     assert calls == ["primary-key", "secondary-key"]
     assert [item.name for item in result.data] == ["2-1"]
-    assert result.source == "Book A"
+    assert round(result.data[0].probability, 4) == 0.1875
+    assert result.source == "API-Football, Book A"
 
 
 def test_odds_pipeline_reports_provider_error_body(monkeypatch):
