@@ -136,17 +136,17 @@ def test_goalscorer_ranking_discounts_predicted_non_starters():
 def test_fantamondiale_ranking_uses_bonus_expected_points_and_clean_sheets():
     ranked = rank_goalscorers(
         [
-            {"description": "Pulisic", "name": "Yes", "price": 3.0, "source": "Book A", "market_key": "goalscorer"},
-            {"description": "Tabakovic", "name": "Yes", "price": 8.0, "source": "Book A", "market_key": "goalscorer"},
+            {"description": "Dembele", "name": "Yes", "price": 3.0, "source": "Book A", "market_key": "goalscorer"},
+            {"description": "Rahimi", "name": "Yes", "price": 8.0, "source": "Book A", "market_key": "goalscorer"},
             {"name": "1-0", "price": 5.0, "source": "Book A", "market_key": "correct_score"},
             {"name": "2-0", "price": 8.0, "source": "Book A", "market_key": "correct_score"},
         ],
-        match=Match("usa-bih", "United States", "Bosnia & Herzegovina", datetime(2026, 7, 1, 21, 0, tzinfo=UTC)),
+        match=Match("france-morocco", "France", "Morocco", datetime(2026, 7, 1, 21, 0, tzinfo=UTC)),
         lineup_result=PipelineResult(
             True,
             data={
-                "United States": TeamLineup(["Freese", "Freeman", "Richards", "Pulisic"]),
-                "Bosnia & Herzegovina": TeamLineup(["Vasilj", "Dzeko", "Tabakovic"]),
+                "France": TeamLineup(["Maignan", "Kounde", "Konate", "Dembele"]),
+                "Morocco": TeamLineup(["Bounou", "Hakimi", "Diaz B.", "Rahimi"]),
             },
             source="Local static team database",
         ),
@@ -155,11 +155,11 @@ def test_fantamondiale_ranking_uses_bonus_expected_points_and_clean_sheets():
     )
 
     assert isinstance(ranked[0], FantamondialePick)
-    assert [item.name for item in ranked[:3]] == ["Freese", "Pulisic", "Tabakovic"]
-    assert ranked[0].team == "Stati Uniti"
+    assert [item.name for item in ranked[:3]] == ["Maignan", "Dembelé", "Rahimi"]
+    assert ranked[0].team == "Francia"
     assert round(ranked[0].expected_points, 3) == 1.625
     assert round(ranked[1].expected_points, 3) == 1.267
-    assert "Bosnia-Erzegovina" in {item.team for item in ranked}
+    assert "Marocco" in {item.team for item in ranked}
 
 
 def test_clean_sheet_inference_uses_only_top_10_exact_scores():
@@ -177,19 +177,19 @@ def test_clean_sheet_inference_uses_only_top_10_exact_scores():
             {"name": "5-2", "price": 14.0, "source": "Book A", "market_key": "correct_score"},
             {"name": "0-1", "price": 100.0, "source": "Book A", "market_key": "correct_score"},
         ],
-        match=Match("usa-bih", "United States", "Bosnia & Herzegovina", datetime(2026, 7, 1, 21, 0, tzinfo=UTC)),
+        match=Match("france-morocco", "France", "Morocco", datetime(2026, 7, 1, 21, 0, tzinfo=UTC)),
         lineup_result=PipelineResult(
             True,
             data={
-                "United States": TeamLineup(["Freese"]),
-                "Bosnia & Herzegovina": TeamLineup(["Vasilj"]),
+                "France": TeamLineup(["Maignan"]),
+                "Morocco": TeamLineup(["Bounou"]),
             },
             source="Local static team database",
         ),
         exact_score_markets={"correct_score"},
     )
 
-    assert [item.name for item in ranked] == ["Freese"]
+    assert [item.name for item in ranked] == ["Maignan"]
     assert round(ranked[0].expected_points, 3) == 1.0
 
 
