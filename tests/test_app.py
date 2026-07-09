@@ -158,7 +158,8 @@ def test_fantamondiale_ranking_uses_bonus_expected_points_and_clean_sheets():
     assert [item.name for item in ranked[:3]] == ["Maignan", "Dembelé", "Rahimi"]
     assert ranked[0].team == "Francia"
     assert round(ranked[0].expected_points, 3) == 1.625
-    assert round(ranked[1].expected_points, 3) == 1.267
+    assert round(ranked[1].probability, 3) == 0.317
+    assert round(ranked[1].expected_points, 3) == 1.523
     assert "Marocco" in {item.team for item in ranked}
 
 

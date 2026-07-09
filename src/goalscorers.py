@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 
 from .fantamondiale import canonical_team, load_player_bonuses, match_player_bonus, player_keys
@@ -69,7 +70,7 @@ def rank_fantamondiale_picks(
     teams = {canonical_team(match.home_team), canonical_team(match.away_team)}
     lineup_confidence = _lineup_confidence(lineup_result)
 
-    grouped: dict[tuple[str, str, str], list[tuple[float, str, int, str]]] = {}
+    grouped: dict[tuple[str, str, str], list[tuple[float, float, str, int, str]]] = {}
     for outcome in outcomes:
         market_key = str(outcome.get("market_key") or "")
         if goalscorer_markets and market_key not in goalscorer_markets:
@@ -86,8 +87,9 @@ def rank_fantamondiale_picks(
         price = float(outcome["price"])
         source = str(outcome.get("source", "Unknown"))
         probability = implied_probability(price) * _appearance_multiplier(name, lineup_confidence)
+        expected_goals = _expected_goals_from_anytime_probability(probability)
         grouped.setdefault((player.name, player.team, player.role), []).append(
-            (probability, source, player.bonus, player.role)
+            (probability, expected_goals, source, player.bonus, player.role)
         )
 
     picks = [
@@ -95,10 +97,10 @@ def rank_fantamondiale_picks(
             name=name,
             team=team,
             role=role,
-            bonus=values[0][2],
-            probability=average([prob for prob, _, _, _ in values]),
-            expected_points=average([prob for prob, _, _, _ in values]) * values[0][2],
-            sources=tuple(sorted({source for _, source, _, _ in values})),
+            bonus=values[0][3],
+            probability=average([prob for prob, _, _, _, _ in values]),
+            expected_points=average([goals for _, goals, _, _, _ in values]) * values[0][3],
+            sources=tuple(sorted({source for _, _, source, _, _ in values})),
         )
         for (name, team, role), values in grouped.items()
     ]
@@ -213,6 +215,14 @@ def _parse_score(value: str) -> tuple[int, int] | None:
     if not match:
         return None
     return int(match.group(1)), int(match.group(2))
+
+
+def _expected_goals_from_anytime_probability(probability: float) -> float:
+    if probability <= 0:
+        return 0.0
+    probability = min(probability, 0.999999)
+    # Interpret anytime-scorer odds as P(goals >= 1) under a Poisson goal model.
+    return -math.log1p(-probability)
 
 
 def _team_from_label(label: str, teams: set[str]) -> str | None:
