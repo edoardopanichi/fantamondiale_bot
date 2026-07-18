@@ -1562,7 +1562,7 @@
   {
     "name": "Risser",
     "team": "Francia",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -1574,7 +1574,7 @@
   {
     "name": "Maignan",
     "team": "Francia",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -1586,7 +1586,7 @@
   {
     "name": "Samba",
     "team": "Francia",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -1610,7 +1610,7 @@
   {
     "name": "Saliba W.",
     "team": "Francia",
-    "bonus": 8,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -1634,7 +1634,7 @@
   {
     "name": "Koundè",
     "team": "Francia",
-    "bonus": 8,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -1658,7 +1658,7 @@
   {
     "name": "Hernandez L.",
     "team": "Francia",
-    "bonus": 11,
+    "bonus": 13,
     "role": "D"
   },
   {
@@ -1682,7 +1682,7 @@
   {
     "name": "Hernandez T.",
     "team": "Francia",
-    "bonus": 7,
+    "bonus": 8,
     "role": "D"
   },
   {
@@ -1718,7 +1718,7 @@
   {
     "name": "Kantè",
     "team": "Francia",
-    "bonus": 10,
+    "bonus": 11,
     "role": "C"
   },
   {
@@ -1754,7 +1754,7 @@
   {
     "name": "Zaire-Emery",
     "team": "Francia",
-    "bonus": 9,
+    "bonus": 7,
     "role": "C"
   },
   {
@@ -1778,7 +1778,7 @@
   {
     "name": "Akliouche",
     "team": "Francia",
-    "bonus": 8,
+    "bonus": 7,
     "role": "C"
   },
   {
@@ -1790,7 +1790,7 @@
   {
     "name": "Olise",
     "team": "Francia",
-    "bonus": 4,
+    "bonus": 5,
     "role": "A"
   },
   {
@@ -1802,7 +1802,7 @@
   {
     "name": "Barcola",
     "team": "Francia",
-    "bonus": 6,
+    "bonus": 5,
     "role": "A"
   },
   {
@@ -1850,7 +1850,7 @@
   {
     "name": "Mateta",
     "team": "Francia",
-    "bonus": 9,
+    "bonus": 6,
     "role": "A"
   },
   {
@@ -2186,7 +2186,7 @@
   {
     "name": "Henderson D.",
     "team": "Inghilterra",
-    "bonus": 4,
+    "bonus": 7,
     "role": "P"
   },
   {
@@ -2198,7 +2198,7 @@
   {
     "name": "Pickford",
     "team": "Inghilterra",
-    "bonus": 4,
+    "bonus": 7,
     "role": "P"
   },
   {
@@ -2210,7 +2210,7 @@
   {
     "name": "Trafford",
     "team": "Inghilterra",
-    "bonus": 4,
+    "bonus": 7,
     "role": "P"
   },
   {
@@ -2222,7 +2222,7 @@
   {
     "name": "Burn",
     "team": "Inghilterra",
-    "bonus": 12,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -2234,7 +2234,7 @@
   {
     "name": "Guehi",
     "team": "Inghilterra",
-    "bonus": 8,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -2258,7 +2258,7 @@
   {
     "name": "Konsa",
     "team": "Inghilterra",
-    "bonus": 9,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -2282,7 +2282,7 @@
   {
     "name": "Chalobah T.",
     "team": "Inghilterra",
-    "bonus": 10,
+    "bonus": 11,
     "role": "D"
   },
   {
@@ -2294,7 +2294,7 @@
   {
     "name": "O'Reilly",
     "team": "Inghilterra",
-    "bonus": 8,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -2306,7 +2306,7 @@
   {
     "name": "Spence",
     "team": "Inghilterra",
-    "bonus": 12,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -2318,7 +2318,7 @@
   {
     "name": "James",
     "team": "Inghilterra",
-    "bonus": 9,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -2330,7 +2330,7 @@
   {
     "name": "Anderson",
     "team": "Inghilterra",
-    "bonus": 8,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -2342,7 +2342,7 @@
   {
     "name": "Rice",
     "team": "Inghilterra",
-    "bonus": 7,
+    "bonus": 8,
     "role": "C"
   },
   {
@@ -2366,7 +2366,7 @@
   {
     "name": "Mainoo",
     "team": "Inghilterra",
-    "bonus": 9,
+    "bonus": 11,
     "role": "C"
   },
   {
@@ -2390,7 +2390,7 @@
   {
     "name": "Eze",
     "team": "Inghilterra",
-    "bonus": 7,
+    "bonus": 8,
     "role": "C"
   },
   {
@@ -2402,7 +2402,7 @@
   {
     "name": "Rogers",
     "team": "Inghilterra",
-    "bonus": 8,
+    "bonus": 6,
     "role": "C"
   },
   {
@@ -2426,7 +2426,7 @@
   {
     "name": "Madueke",
     "team": "Inghilterra",
-    "bonus": 7,
+    "bonus": 6,
     "role": "A"
   },
   {
@@ -2450,7 +2450,7 @@
   {
     "name": "Saka",
     "team": "Inghilterra",
-    "bonus": 5,
+    "bonus": 6,
     "role": "A"
   },
   {
@@ -2474,7 +2474,7 @@
   {
     "name": "Toney",
     "team": "Inghilterra",
-    "bonus": 9,
+    "bonus": 7,
     "role": "A"
   },
   {
@@ -2486,7 +2486,7 @@
   {
     "name": "Watkins",
     "team": "Inghilterra",
-    "bonus": 6,
+    "bonus": 7,
     "role": "A"
   },
   {
@@ -3122,7 +3122,7 @@
   {
     "name": "Garcia J.",
     "team": "Spagna",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -3134,7 +3134,7 @@
   {
     "name": "Raya",
     "team": "Spagna",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -3146,7 +3146,7 @@
   {
     "name": "Unai Simon",
     "team": "Spagna",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -3158,7 +3158,7 @@
   {
     "name": "Cubarsi",
     "team": "Spagna",
-    "bonus": 8,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -3182,7 +3182,7 @@
   {
     "name": "Grimaldo",
     "team": "Spagna",
-    "bonus": 10,
+    "bonus": 11,
     "role": "D"
   },
   {
@@ -3206,7 +3206,7 @@
   {
     "name": "Laporte",
     "team": "Spagna",
-    "bonus": 8,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -3218,7 +3218,7 @@
   {
     "name": "Llorente M.",
     "team": "Spagna",
-    "bonus": 8,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -3230,7 +3230,7 @@
   {
     "name": "Pubill",
     "team": "Spagna",
-    "bonus": 11,
+    "bonus": 12,
     "role": "D"
   },
   {
@@ -3242,7 +3242,7 @@
   {
     "name": "Porro",
     "team": "Spagna",
-    "bonus": 9,
+    "bonus": 7,
     "role": "D"
   },
   {
@@ -3254,7 +3254,7 @@
   {
     "name": "Gavi",
     "team": "Spagna",
-    "bonus": 8,
+    "bonus": 9,
     "role": "C"
   },
   {
@@ -3266,7 +3266,7 @@
   {
     "name": "Pedri",
     "team": "Spagna",
-    "bonus": 6,
+    "bonus": 8,
     "role": "C"
   },
   {
@@ -3278,7 +3278,7 @@
   {
     "name": "Rodri",
     "team": "Spagna",
-    "bonus": 7,
+    "bonus": 8,
     "role": "C"
   },
   {
@@ -3290,7 +3290,7 @@
   {
     "name": "Ruiz",
     "team": "Spagna",
-    "bonus": 6,
+    "bonus": 7,
     "role": "C"
   },
   {
@@ -3338,7 +3338,7 @@
   {
     "name": "Olmo",
     "team": "Spagna",
-    "bonus": 5,
+    "bonus": 6,
     "role": "C"
   },
   {
@@ -3350,7 +3350,7 @@
   {
     "name": "Pino",
     "team": "Spagna",
-    "bonus": 7,
+    "bonus": 9,
     "role": "C"
   },
   {
@@ -3362,7 +3362,7 @@
   {
     "name": "Williams N.",
     "team": "Spagna",
-    "bonus": 5,
+    "bonus": 7,
     "role": "A"
   },
   {
@@ -3374,7 +3374,7 @@
   {
     "name": "Munoz V.",
     "team": "Spagna",
-    "bonus": 8,
+    "bonus": 9,
     "role": "A"
   },
   {
@@ -3386,7 +3386,7 @@
   {
     "name": "Yamal",
     "team": "Spagna",
-    "bonus": 3,
+    "bonus": 5,
     "role": "A"
   },
   {
@@ -3398,7 +3398,7 @@
   {
     "name": "Torres Fer.",
     "team": "Spagna",
-    "bonus": 5,
+    "bonus": 6,
     "role": "A"
   },
   {
@@ -4370,7 +4370,7 @@
   {
     "name": "Martinez E.",
     "team": "Argentina",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -4382,7 +4382,7 @@
   {
     "name": "Musso",
     "team": "Argentina",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -4394,7 +4394,7 @@
   {
     "name": "Rulli",
     "team": "Argentina",
-    "bonus": 3,
+    "bonus": 6,
     "role": "P"
   },
   {
@@ -4406,7 +4406,7 @@
   {
     "name": "Medina F.",
     "team": "Argentina",
-    "bonus": 9,
+    "bonus": 11,
     "role": "D"
   },
   {
@@ -4418,7 +4418,7 @@
   {
     "name": "Balerdi",
     "team": "Argentina",
-    "bonus": 11,
+    "bonus": 13,
     "role": "D"
   },
   {
@@ -4430,7 +4430,7 @@
   {
     "name": "Molina N.",
     "team": "Argentina",
-    "bonus": 7,
+    "bonus": 9,
     "role": "D"
   },
   {
@@ -4442,7 +4442,7 @@
   {
     "name": "Montiel",
     "team": "Argentina",
-    "bonus": 9,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -4490,7 +4490,7 @@
   {
     "name": "Tagliafico",
     "team": "Argentina",
-    "bonus": 9,
+    "bonus": 10,
     "role": "D"
   },
   {
@@ -4502,7 +4502,7 @@
   {
     "name": "Barco",
     "team": "Argentina",
-    "bonus": 9,
+    "bonus": 11,
     "role": "C"
   },
   {
@@ -4514,7 +4514,7 @@
   {
     "name": "Mac Allister",
     "team": "Argentina",
-    "bonus": 8,
+    "bonus": 7,
     "role": "C"
   },
   {
@@ -4538,7 +4538,7 @@
   {
     "name": "Fernandez E.",
     "team": "Argentina",
-    "bonus": 6,
+    "bonus": 5,
     "role": "C"
   },
   {
@@ -4550,7 +4550,7 @@
   {
     "name": "Palacios",
     "team": "Argentina",
-    "bonus": 10,
+    "bonus": 11,
     "role": "C"
   },
   {
@@ -4562,7 +4562,7 @@
   {
     "name": "Paredes",
     "team": "Argentina",
-    "bonus": 10,
+    "bonus": 9,
     "role": "C"
   },
   {
@@ -4586,7 +4586,7 @@
   {
     "name": "Paz",
     "team": "Argentina",
-    "bonus": 7,
+    "bonus": 10,
     "role": "C"
   },
   {
@@ -4622,7 +4622,7 @@
   {
     "name": "Almada",
     "team": "Argentina",
-    "bonus": 6,
+    "bonus": 7,
     "role": "C"
   },
   {
