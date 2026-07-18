@@ -169,36 +169,56 @@ def _fetch_api_football_exact_score_outcomes(config: Config, match: Match) -> tu
 
 
 def run_exact_score_pipeline(config: Config, match: Match) -> PipelineResult:
-    if not config.odds_api_key:
-        return PipelineResult(False, data=[], error="ODDS_API_KEY is not configured", source="The Odds API")
-    try:
-        outcomes, sources, odds_error, tried_odds_api_markets = _fetch_odds_api_outcomes(
-            config,
-            match,
-            config.exact_score_markets,
-        )
-        if outcomes:
-            source_name = ", ".join(sorted(sources)) or "The Odds API"
-        else:
-            outcomes, sources = _fetch_api_football_exact_score_outcomes(config, match)
-            source_name = ", ".join(sorted(sources)) or "API-Football"
-        ranked_for_display = rank_exact_scores(outcomes)
-        ranked_for_clean_sheets = rank_exact_scores(outcomes, limit=10)
-        if not ranked_for_display:
-            return PipelineResult(
-                False,
-                data=[],
-                error=odds_error if tried_odds_api_markets and odds_error else "No exact score odds available",
-                source="The Odds API",
+    outcomes: list[dict] = []
+    sources: set[str] = set()
+    errors: list[str] = []
+    attempted_sources: list[str] = []
+
+    if config.odds_api_key:
+        attempted_sources.append("The Odds API")
+        try:
+            odds_outcomes, odds_sources, odds_error, tried_odds_api_markets = _fetch_odds_api_outcomes(
+                config,
+                match,
+                config.exact_score_markets,
             )
+            outcomes.extend(odds_outcomes)
+            sources.update(odds_sources)
+            if tried_odds_api_markets and odds_error:
+                errors.append(f"The Odds API: {odds_error}")
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
+            errors.append(f"The Odds API: {_api_error_message(exc)}")
+
+    if config.lineup_api_key:
+        attempted_sources.append("API-Football")
+        try:
+            api_football_outcomes, api_football_sources = _fetch_api_football_exact_score_outcomes(config, match)
+            outcomes.extend(api_football_outcomes)
+            sources.update(api_football_sources)
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
+            errors.append(f"API-Football: {_api_error_message(exc)}")
+
+    source_name = ", ".join(sorted(sources)) or ", ".join(attempted_sources) or "The Odds API, API-Football"
+    ranked_for_display = rank_exact_scores(outcomes)
+    ranked_for_clean_sheets = rank_exact_scores(outcomes, limit=10)
+    if not ranked_for_display:
+        error = "No exact score odds available"
+        if errors:
+            error = "; ".join(errors)
+        elif not config.odds_api_key and not config.lineup_api_key:
+            error = "ODDS_API_KEY or LINEUP_API_KEY is not configured"
         return PipelineResult(
-            True,
-            data=ranked_for_display,
+            False,
+            data=[],
+            error=error,
             source=source_name,
-            metadata={"clean_sheet_exact_scores": ranked_for_clean_sheets},
         )
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError, ValueError) as exc:
-        return PipelineResult(False, data=[], error=_api_error_message(exc), source="The Odds API")
+    return PipelineResult(
+        True,
+        data=ranked_for_display,
+        source=source_name,
+        metadata={"clean_sheet_exact_scores": ranked_for_clean_sheets},
+    )
 
 
 def run_goalscorer_pipeline(

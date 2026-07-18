@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 
 
-PLAYER_BONUS_PATH = Path(__file__).resolve().parents[1] / "data" / "fantamondiale_sedicesimi_players.json"
+PLAYER_BONUS_PATH = Path(__file__).resolve().parents[1] / "data" / "fantamondiale_quarti_players.json"
 
 TEAM_ALIASES = {
     "argentina": "Argentina",

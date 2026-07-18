@@ -9,7 +9,7 @@ Each alert includes match details, probable lineups and team modules/formations 
 Research summary used for the implementation:
 
 - Fixtures: The Odds API events endpoint is preferred when `ODDS_API_KEY` is configured because it has stable documented sports/events endpoints. The app also includes a small FIFA 2026 opening-schedule fallback so local dry-run verification can detect the first matches without credentials. Reference: <https://the-odds-api.com/liveapi/guides/v4/>
-- Odds: The Odds API is preferred because it has official API access, bookmaker aggregation, event odds, and event market discovery. If `ODDS_API_SECONDARY_KEY` is configured, The Odds API is retried with that key when the primary key errors before exact-score odds fall back to API-Football. Correct-score, half-time result, and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS`, `HALF_TIME_RESULT_MARKETS`, and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>
+- Odds: The Odds API is preferred for documented fixture/event discovery, bookmaker aggregation, half-time odds, and goalscorer odds. Exact-score odds are aggregated from every configured exact-score provider: The Odds API when it exposes a configured correct-score market for the event, plus API-Football when `LINEUP_API_KEY` can access fixture odds with the `Exact Score` bet. If `ODDS_API_SECONDARY_KEY` is configured, The Odds API is retried with that key when the primary key errors. Correct-score, half-time result, and soccer player-goalscorer coverage depends on bookmaker availability, so the market keys are configurable with `EXACT_SCORE_MARKETS`, `HALF_TIME_RESULT_MARKETS`, and `GOALSCORER_MARKETS`. Reference: <https://the-odds-api.com/sports-odds-data/betting-markets.html>, <https://www.api-football.com/documentation-v3>
 - Lineups: API-Football is tried first for official lineups via keyed API access. If it returns no lineup and `SPORTMONKS_API_TOKEN` is configured, Sportmonks is tried second, including the paid `expectedLineups` include when available. If API providers do not return a lineup, the app tries Goal.com Italian sitemap discovery for match-specific predicted lineup pages, then TalkSport's WordPress JSON search for match previews, then the local static team database in `data/static_team_lineups.json`, which contains all 48 national-team lineups from the Sky Sport formation guide. The Telegram message states which source was used. References: <https://www.api-football.com/documentation-v3>, <https://docs.sportmonks.com/v3/endpoints-and-entities/endpoints/premium-expected-lineups>
 
 Provider keys that are actually mandatory:
@@ -17,7 +17,7 @@ Provider keys that are actually mandatory:
 - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are required for real sends.
 - `ODDS_API_KEY` is required for live exact-score/goalscorer odds.
 - `ODDS_API_SECONDARY_KEY` is optional and is used only if the primary Odds API key fails.
-- `LINEUP_API_KEY` enables API-Football lineup retrieval.
+- `LINEUP_API_KEY` enables API-Football lineup retrieval and exact-score odds when the API plan/event exposes fixture odds.
 - `SPORTMONKS_API_TOKEN` optionally enables Sportmonks as a second lineup provider.
 
 Without odds or lineup keys, the app still sends the Telegram message. Lineups can still be filled by the editorial or static fallbacks; unavailable sections remain clearly marked.

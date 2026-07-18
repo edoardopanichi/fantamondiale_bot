@@ -1,0 +1,1250 @@
+[
+  {
+    "name": "Risser",
+    "team": "Francia",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Tagnaouti",
+    "team": "Marocco",
+    "bonus": 8,
+    "role": "P"
+  },
+  {
+    "name": "Maignan",
+    "team": "Francia",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "El Kajoui",
+    "team": "Marocco",
+    "bonus": 8,
+    "role": "P"
+  },
+  {
+    "name": "Samba",
+    "team": "Francia",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Bounou",
+    "team": "Marocco",
+    "bonus": 8,
+    "role": "P"
+  },
+  {
+    "name": "Digne",
+    "team": "Francia",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Saadane",
+    "team": "Marocco",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Saliba W.",
+    "team": "Francia",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Belammari",
+    "team": "Marocco",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Gusto",
+    "team": "Francia",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Diop",
+    "team": "Marocco",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Koundè",
+    "team": "Francia",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "El Ouahdi",
+    "team": "Marocco",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Konatè",
+    "team": "Francia",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Hakimi",
+    "team": "Marocco",
+    "bonus": 6,
+    "role": "D"
+  },
+  {
+    "name": "Hernandez L.",
+    "team": "Francia",
+    "bonus": 13,
+    "role": "D"
+  },
+  {
+    "name": "Halhal",
+    "team": "Marocco",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Lacroix M.",
+    "team": "Francia",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Mazraoui",
+    "team": "Marocco",
+    "bonus": 8,
+    "role": "D"
+  },
+  {
+    "name": "Hernandez T.",
+    "team": "Francia",
+    "bonus": 8,
+    "role": "D"
+  },
+  {
+    "name": "Riad",
+    "team": "Marocco",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Upamecano",
+    "team": "Francia",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Salah-Eddine",
+    "team": "Marocco",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Konè M.",
+    "team": "Francia",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "El Aynaoui",
+    "team": "Marocco",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Kantè",
+    "team": "Francia",
+    "bonus": 11,
+    "role": "C"
+  },
+  {
+    "name": "El Khannouss",
+    "team": "Marocco",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Rabiot",
+    "team": "Francia",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "El Mourabet",
+    "team": "Marocco",
+    "bonus": 12,
+    "role": "C"
+  },
+  {
+    "name": "Tchouameni",
+    "team": "Francia",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Amrabat",
+    "team": "Marocco",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Zaire-Emery",
+    "team": "Francia",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Ounahi",
+    "team": "Marocco",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Cherki",
+    "team": "Francia",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Saibari",
+    "team": "Marocco",
+    "bonus": 5,
+    "role": "C"
+  },
+  {
+    "name": "Akliouche",
+    "team": "Francia",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Bouaddi",
+    "team": "Marocco",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Olise",
+    "team": "Francia",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Diaz B.",
+    "team": "Marocco",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Barcola",
+    "team": "Francia",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Amaimouni-Echghouyab",
+    "team": "Marocco",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Dembelé",
+    "team": "Francia",
+    "bonus": 3,
+    "role": "A"
+  },
+  {
+    "name": "Yassine",
+    "team": "Marocco",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Doué D.",
+    "team": "Francia",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Sbai",
+    "team": "Marocco",
+    "bonus": 10,
+    "role": "A"
+  },
+  {
+    "name": "Mbappe",
+    "team": "Francia",
+    "bonus": 3,
+    "role": "A"
+  },
+  {
+    "name": "Talbi C.",
+    "team": "Marocco",
+    "bonus": 8,
+    "role": "A"
+  },
+  {
+    "name": "Mateta",
+    "team": "Francia",
+    "bonus": 6,
+    "role": "A"
+  },
+  {
+    "name": "Rahimi",
+    "team": "Marocco",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "Thuram",
+    "team": "Francia",
+    "bonus": 8,
+    "role": "A"
+  },
+  {
+    "name": "El Kaabi",
+    "team": "Marocco",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "Garcia J.",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Lammens",
+    "team": "Belgio",
+    "bonus": 8,
+    "role": "P"
+  },
+  {
+    "name": "Raya",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Penders",
+    "team": "Belgio",
+    "bonus": 8,
+    "role": "P"
+  },
+  {
+    "name": "Unai Simon",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Courtois",
+    "team": "Belgio",
+    "bonus": 8,
+    "role": "P"
+  },
+  {
+    "name": "Cubarsi",
+    "team": "Spagna",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Castagne",
+    "team": "Belgio",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Cucurella",
+    "team": "Spagna",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "De Cuyper",
+    "team": "Belgio",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Grimaldo",
+    "team": "Spagna",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "De Winter",
+    "team": "Belgio",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Garcia E.",
+    "team": "Spagna",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Debast",
+    "team": "Belgio",
+    "bonus": 13,
+    "role": "D"
+  },
+  {
+    "name": "Laporte",
+    "team": "Spagna",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Mechele",
+    "team": "Belgio",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Llorente M.",
+    "team": "Spagna",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Meunier",
+    "team": "Belgio",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Pubill",
+    "team": "Spagna",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Ngoy",
+    "team": "Belgio",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Porro",
+    "team": "Spagna",
+    "bonus": 7,
+    "role": "D"
+  },
+  {
+    "name": "Seys",
+    "team": "Belgio",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Gavi",
+    "team": "Spagna",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Theate",
+    "team": "Belgio",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Pedri",
+    "team": "Spagna",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Onana A.",
+    "team": "Belgio",
+    "bonus": 12,
+    "role": "C"
+  },
+  {
+    "name": "Rodri",
+    "team": "Spagna",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Raskin",
+    "team": "Belgio",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Ruiz",
+    "team": "Spagna",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Tielemans",
+    "team": "Belgio",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Zubimendi",
+    "team": "Spagna",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Witsel",
+    "team": "Belgio",
+    "bonus": 12,
+    "role": "C"
+  },
+  {
+    "name": "Merino",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Moreira D.",
+    "team": "Belgio",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Baena",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Saelemaekers",
+    "team": "Belgio",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Olmo",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "De Bruyne",
+    "team": "Belgio",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Pino",
+    "team": "Spagna",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Vanaken",
+    "team": "Belgio",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Williams N.",
+    "team": "Spagna",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "De Ketelaere",
+    "team": "Belgio",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Munoz V.",
+    "team": "Spagna",
+    "bonus": 9,
+    "role": "A"
+  },
+  {
+    "name": "Doku",
+    "team": "Belgio",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Yamal",
+    "team": "Spagna",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Lukebakio",
+    "team": "Belgio",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "Torres Fer.",
+    "team": "Spagna",
+    "bonus": 6,
+    "role": "A"
+  },
+  {
+    "name": "Trossard",
+    "team": "Belgio",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Oyarzabal",
+    "team": "Spagna",
+    "bonus": 4,
+    "role": "A"
+  },
+  {
+    "name": "Fernadez-Pardo",
+    "team": "Belgio",
+    "bonus": 8,
+    "role": "A"
+  },
+  {
+    "name": "Iglesias",
+    "team": "Spagna",
+    "bonus": 9,
+    "role": "A"
+  },
+  {
+    "name": "Lukaku",
+    "team": "Belgio",
+    "bonus": 4,
+    "role": "A"
+  },
+  {
+    "name": "Selvik",
+    "team": "Norvegia",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Henderson D.",
+    "team": "Inghilterra",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Nyland",
+    "team": "Norvegia",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Pickford",
+    "team": "Inghilterra",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Tangvik",
+    "team": "Norvegia",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Trafford",
+    "team": "Inghilterra",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Ajer",
+    "team": "Norvegia",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Burn",
+    "team": "Inghilterra",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Bjorkan",
+    "team": "Norvegia",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Guehi",
+    "team": "Inghilterra",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Falchener",
+    "team": "Norvegia",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Quansah",
+    "team": "Inghilterra",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Heggem",
+    "team": "Norvegia",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Konsa",
+    "team": "Inghilterra",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Langas",
+    "team": "Norvegia",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Stones",
+    "team": "Inghilterra",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Ostigard",
+    "team": "Norvegia",
+    "bonus": 8,
+    "role": "D"
+  },
+  {
+    "name": "Chalobah T.",
+    "team": "Inghilterra",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Pedersen",
+    "team": "Norvegia",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "O'Reilly",
+    "team": "Inghilterra",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Ryerson",
+    "team": "Norvegia",
+    "bonus": 8,
+    "role": "D"
+  },
+  {
+    "name": "Spence",
+    "team": "Inghilterra",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Moller Wolfe",
+    "team": "Norvegia",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "James",
+    "team": "Inghilterra",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Aasgaard",
+    "team": "Norvegia",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Anderson",
+    "team": "Inghilterra",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Berg",
+    "team": "Norvegia",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Rice",
+    "team": "Inghilterra",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Aursnes",
+    "team": "Norvegia",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Henderson J.",
+    "team": "Inghilterra",
+    "bonus": 11,
+    "role": "C"
+  },
+  {
+    "name": "Berge",
+    "team": "Norvegia",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Mainoo",
+    "team": "Inghilterra",
+    "bonus": 11,
+    "role": "C"
+  },
+  {
+    "name": "Thorsby",
+    "team": "Norvegia",
+    "bonus": 11,
+    "role": "C"
+  },
+  {
+    "name": "Bellingham",
+    "team": "Inghilterra",
+    "bonus": 4,
+    "role": "C"
+  },
+  {
+    "name": "Thorstvedt",
+    "team": "Norvegia",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Eze",
+    "team": "Inghilterra",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Odegaard",
+    "team": "Norvegia",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Rogers",
+    "team": "Inghilterra",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Bobb",
+    "team": "Norvegia",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Gordon A.",
+    "team": "Inghilterra",
+    "bonus": 5,
+    "role": "C"
+  },
+  {
+    "name": "Nusa",
+    "team": "Norvegia",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Madueke",
+    "team": "Inghilterra",
+    "bonus": 6,
+    "role": "A"
+  },
+  {
+    "name": "Schjelderup",
+    "team": "Norvegia",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "Rashford",
+    "team": "Inghilterra",
+    "bonus": 6,
+    "role": "A"
+  },
+  {
+    "name": "Hauge",
+    "team": "Norvegia",
+    "bonus": 8,
+    "role": "A"
+  },
+  {
+    "name": "Saka",
+    "team": "Inghilterra",
+    "bonus": 6,
+    "role": "A"
+  },
+  {
+    "name": "Haaland",
+    "team": "Norvegia",
+    "bonus": 3,
+    "role": "A"
+  },
+  {
+    "name": "Kane",
+    "team": "Inghilterra",
+    "bonus": 3,
+    "role": "A"
+  },
+  {
+    "name": "Strand Larsen",
+    "team": "Norvegia",
+    "bonus": 9,
+    "role": "A"
+  },
+  {
+    "name": "Toney",
+    "team": "Inghilterra",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "Sorloth",
+    "team": "Norvegia",
+    "bonus": 5,
+    "role": "A"
+  },
+  {
+    "name": "Watkins",
+    "team": "Inghilterra",
+    "bonus": 7,
+    "role": "A"
+  },
+  {
+    "name": "Martinez E.",
+    "team": "Argentina",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Keller",
+    "team": "Svizzera",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Musso",
+    "team": "Argentina",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Kobel",
+    "team": "Svizzera",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Rulli",
+    "team": "Argentina",
+    "bonus": 6,
+    "role": "P"
+  },
+  {
+    "name": "Mvogo",
+    "team": "Svizzera",
+    "bonus": 7,
+    "role": "P"
+  },
+  {
+    "name": "Medina F.",
+    "team": "Argentina",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Akanji",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Balerdi",
+    "team": "Argentina",
+    "bonus": 13,
+    "role": "D"
+  },
+  {
+    "name": "Amenda",
+    "team": "Svizzera",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Molina N.",
+    "team": "Argentina",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Comert",
+    "team": "Svizzera",
+    "bonus": 12,
+    "role": "D"
+  },
+  {
+    "name": "Montiel",
+    "team": "Argentina",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Elvedi",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Otamendi",
+    "team": "Argentina",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Jaquez",
+    "team": "Svizzera",
+    "bonus": 11,
+    "role": "D"
+  },
+  {
+    "name": "Romero",
+    "team": "Argentina",
+    "bonus": 8,
+    "role": "D"
+  },
+  {
+    "name": "Muheim",
+    "team": "Svizzera",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Martinez Lis.",
+    "team": "Argentina",
+    "bonus": 9,
+    "role": "D"
+  },
+  {
+    "name": "Rodriguez R.",
+    "team": "Svizzera",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Tagliafico",
+    "team": "Argentina",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Widmer",
+    "team": "Svizzera",
+    "bonus": 10,
+    "role": "D"
+  },
+  {
+    "name": "Barco",
+    "team": "Argentina",
+    "bonus": 11,
+    "role": "C"
+  },
+  {
+    "name": "Aebischer",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Mac Allister",
+    "team": "Argentina",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Freuler",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "De Paul",
+    "team": "Argentina",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Jashari",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Fernandez E.",
+    "team": "Argentina",
+    "bonus": 5,
+    "role": "C"
+  },
+  {
+    "name": "Manzambi",
+    "team": "Svizzera",
+    "bonus": 5,
+    "role": "C"
+  },
+  {
+    "name": "Palacios",
+    "team": "Argentina",
+    "bonus": 11,
+    "role": "C"
+  },
+  {
+    "name": "Sow",
+    "team": "Svizzera",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Paredes",
+    "team": "Argentina",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Xhaka",
+    "team": "Svizzera",
+    "bonus": 8,
+    "role": "C"
+  },
+  {
+    "name": "Lo Celso",
+    "team": "Argentina",
+    "bonus": 9,
+    "role": "C"
+  },
+  {
+    "name": "Zakaria D.",
+    "team": "Svizzera",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Paz",
+    "team": "Argentina",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Rieder",
+    "team": "Svizzera",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Gonzalez N.",
+    "team": "Argentina",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Fassnacht",
+    "team": "Svizzera",
+    "bonus": 10,
+    "role": "C"
+  },
+  {
+    "name": "Simeone",
+    "team": "Argentina",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Ndoye",
+    "team": "Svizzera",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Almada",
+    "team": "Argentina",
+    "bonus": 7,
+    "role": "C"
+  },
+  {
+    "name": "Vargas R.",
+    "team": "Svizzera",
+    "bonus": 6,
+    "role": "C"
+  },
+  {
+    "name": "Alvarez J.",
+    "team": "Argentina",
+    "bonus": 4,
+    "role": "A"
+  },
+  {
+    "name": "Okafor",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "A"
+  },
+  {
+    "name": "Messi",
+    "team": "Argentina",
+    "bonus": 3,
+    "role": "A"
+  },
+  {
+    "name": "Amdouni",
+    "team": "Svizzera",
+    "bonus": 8,
+    "role": "A"
+  },
+  {
+    "name": "Martinez L.",
+    "team": "Argentina",
+    "bonus": 4,
+    "role": "A"
+  },
+  {
+    "name": "Itten",
+    "team": "Svizzera",
+    "bonus": 9,
+    "role": "A"
+  },
+  {
+    "name": "Lopez J.M.",
+    "team": "Argentina",
+    "bonus": 9,
+    "role": "A"
+  },
+  {
+    "name": "Embolo",
+    "team": "Svizzera",
+    "bonus": 5,
+    "role": "A"
+  }
+]
